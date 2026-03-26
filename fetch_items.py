@@ -1,5 +1,6 @@
 import requests
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -54,6 +55,53 @@ def fetch_bibs(pageNum=0, get_pages=False):
         )
         ids.add(r.get("id"))
     return parsed, ids
+
+def fetch_edition(id):
+    url = f"https://na2.iiivega.com/api/search-result/editions/{id}"
+    headers = {
+        "accept": "application/json, text/plain, */*",
+        "accept-language": "en-US,en;q=0.9",
+        "anonymous-user-id": "8f979f0f-2cda-46d7-9da5-4c3dddec18b0",
+        "api-version": "1",
+        "iii-customer-domain": "slouc.na2.iiivega.com",
+        "iii-host-domain": "slouc.na2.iiivega.com",
+        "priority": "u=1, i",
+        "sec-ch-ua": "Chromium;v=146, Not-A.Brand;v=24, Google Chrome;v=146",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-site",
+        "Referer": "https://slouc.na2.iiivega.com/"
+    }
+
+    response = requests.get(url=url, headers=headers)
+    response.raise_for_status()
+
+    data = response.json()
+    e = data.get("edition", {})
+
+    # create subjects string
+    for k, v in e.items():
+        subjects_str = ""
+        if re.match("subj", k):
+            subjects_str += v + ", "
+        
+    edition_info = (
+        id,
+        e.get("author"),
+        e.get("itemLanguage"),
+        subjects_str,
+        e.get("summary")
+    )
+
+    return edition_info
+
+def fetch_all_editions(edition_ids):
+    editions = []
+    for id in edition_ids:
+        editions.append(fetch_edition(id))
+    return editions
     
 if __name__ == "__main__":
     results = fetch_bibs()
