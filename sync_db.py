@@ -24,9 +24,8 @@ def create_con():
 # Bibs
 ########################################################
 def bibs(con, cur):
-    logger.info("syncing bibs table...")
     # fetch bibs with API
-    api_data, api_ids = fetch_items.fetch_bibs()
+    api_data, api_ids = fetch_items.fetch_all_bibs()
 
     # generate diff with bib table (insert/delete/unchanged)
     res = cur.execute("SELECT id FROM bibs").fetchall()
@@ -56,10 +55,10 @@ def bibs(con, cur):
     con.commit()
 
     # log number of remaining rows
-    num_rows = cur.execute("SELECT COUNT(*) FROM bibs").fetchone()[0]
-    expected_rows = len(unchanged) - len(to_delete) + len(to_insert)
-    logger.info(f"Insert/delete operations complete. {num_rows} row now in db")
-    logger.info(f"This should match # unchanged - # to delete + # to insert, which is {expected_rows}")
+    # num_rows = cur.execute("SELECT COUNT(*) FROM bibs").fetchone()[0]
+    # expected_rows = len(unchanged) - len(to_delete) + len(to_insert)
+    # logger.info(f"Insert/delete operations complete. {num_rows} row now in db")
+    # logger.info(f"This should match # unchanged - # to delete + # to insert, which is {expected_rows}")
 
 ########################################################
 # Editions
@@ -74,7 +73,7 @@ def editions(con, cur):
 
     to_insert = bib_e_ids - edition_ids
     to_delete = edition_ids - bib_e_ids
-    unchanged = bib_e_ids | edition_ids
+    unchanged = bib_e_ids & edition_ids
 
     # log diff
     logger.info("editions diff:")
@@ -98,12 +97,21 @@ def editions(con, cur):
     con.commit()
 
     # log number of remaining rows
-    num_rows = cur.execute("SELECT COUNT(*) FROM bibs").fetchone()[0]
-    expected_rows = len(unchanged) - len(to_delete) + len(to_insert)
-    logger.info(f"Insert/delete operations complete. {num_rows} row now in db")
-    logger.info(f"This should match # unchanged - # to delete + # to insert, which is {expected_rows}")
+    # num_rows = cur.execute("SELECT COUNT(*) FROM bibs").fetchone()[0]
+    # expected_rows = len(unchanged) - len(to_delete) + len(to_insert)
+    # logger.info(f"Insert/delete operations complete. {num_rows} row now in db")
+    # logger.info(f"This should match # unchanged - # to delete + # to insert, which is {expected_rows}")
+
+def sync():
+    logger.info("starting sync...")
+    con, cur = create_con()
+    logger.info("################")
+    bibs(con, cur)
+    logger.info("################")
+    editions(con, cur)
+    logger.info("################")
+
+    logger.info("sync complete.")
 
 if __name__ == "__main__":
-    con, cur = create_con()
-    bibs(con, cur)
-    editions(con, cur)
+    sync()

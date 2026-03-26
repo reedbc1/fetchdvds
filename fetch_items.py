@@ -1,14 +1,15 @@
 import requests
 import logging
 import re
+import math
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-CONFIG = {"searchText":"*","pageSize":1}
+CONFIG = {"searchText":"potatoes","pageSize":100}
 
 def fetch_bibs(pageNum=0, get_pages=False):
-    logger.info(f"Fetching bibs with parameters searchText:{CONFIG.get("searchText")} and pageSize:{CONFIG.get("pageSize")}")
+    logger.info(f"Fetching page {pageNum}")
 
     url = "https://na2.iiivega.com/api/search-result/search/format-groups"
 
@@ -30,7 +31,24 @@ def fetch_bibs(pageNum=0, get_pages=False):
         "Referer": "https://slouc.na2.iiivega.com/"
     }
 
-    payload = {"searchText":CONFIG.get("searchText",""),"sorting":"relevance","sortOrder":"asc","searchType":"everything","pageNum":pageNum,"pageSize":CONFIG.get("pageSize",""),"resourceType":"FormatGroup"}
+    payload = {
+        "searchText": CONFIG.get("searchText", ""),
+        "sorting": "relevance",
+        "sortOrder": "asc",
+        "searchType": "everything",
+        "universalLimiterIds": [
+            "at_library"
+        ],
+        "materialTypeIds": [
+            "1"
+        ],
+        "locationIds": [
+            "59"
+        ],
+        "pageNum": CONFIG.get("pageNum", ""),
+        "pageSize": CONFIG.get("pageSize", ""),
+        "resourceType": "FormatGroup"
+    }
 
     response = requests.post(url=url, headers=headers, json=payload)
     response.raise_for_status()
@@ -82,20 +100,36 @@ def fetch_edition(id):
     e = data.get("edition", {})
 
     # create subjects string
+    subjects = []
     for k, v in e.items():
-        subjects_str = ""
         if re.match("subj", k):
-            subjects_str += v + ", "
-        
+            for subject in v:
+                subjects.append(subject)
+    try:
+        author = ", ".join(e.get("author"))
+    except Exception:
+        author = e.get("author")
+
     edition_info = (
         id,
-        e.get("author"),
-        e.get("itemLanguage"),
-        subjects_str,
-        e.get("summary")
+        author,
+        ", ".join(e.get("itemLanguage")),
+        ", ".join(subjects),
+        ", ".join(e.get("noteSummary"))
     )
 
     return edition_info
+
+def fetch_all_bibs():
+    total_pages = fetch_bibs(get_pages=True)
+    all_bibs = []
+    all_ids = set()
+    for i in range(0, total_pages + 1):
+        bibs, ids = fetch_bibs(pageNum = i)
+        all_bibs += bibs
+        all_ids.update(ids)
+
+    return all_bibs, all_ids
 
 def fetch_all_editions(edition_ids: list):
     editions = []
@@ -104,5 +138,5 @@ def fetch_all_editions(edition_ids: list):
     return editions
     
 if __name__ == "__main__":
-    results = fetch_bibs()
-    print(results)
+    bibs = fetch_all_bibs()
+    print(bibs)
