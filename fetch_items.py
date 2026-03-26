@@ -97,7 +97,7 @@ def fetch_edition(id):
 
     return edition_info
 
-def fetch_all_editions(edition_ids):
+def fetch_all_editions(edition_ids: list):
     editions = []
     for id in edition_ids:
         editions.append(fetch_edition(id))

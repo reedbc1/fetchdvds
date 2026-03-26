@@ -32,7 +32,6 @@ def bibs(con, cur):
     res = cur.execute("SELECT id FROM bibs").fetchall()
     db_ids = {id[0] for id in res}
 
-    num_rows = cur.execute("SELECT COUNT(*) FROM bibs").fetchone()[0]
     to_insert = api_ids - db_ids
     to_delete = db_ids - api_ids
     unchanged = api_ids & db_ids
@@ -66,18 +65,46 @@ def bibs(con, cur):
 # Editions
 ########################################################
 def editions(con, cur):
+
+    # use bib table to generate diff with editions table
     res = cur.execute("SELECT editionId FROM bibs").fetchall()
     bib_e_ids = {r[0] for r in res}
 
     res = cur.execute("SELECT id from editions").fetchall()
     edition_ids = {r[0] for r in res}
 
-    # use bib table to generate diff with editions table
+    to_insert = bib_e_ids - edition_ids
+    to_delete = edition_ids - bib_e_ids
+    unchanged = bib_e_ids | edition_ids
+
+    # log diff
+    logger.info("editions diff:")
+    logger.info(f"to_insert: {len(to_insert)}")
+    logger.info(f"to_delete: {len(to_delete)}")
+    logger.info(f"unchanged: {len(unchanged)}")
 
     # delete records in editions table not in bib table
+    placeholders = ','.join(['?' for _ in to_delete])
+    query = f"DELETE FROM editions WHERE id IN ({placeholders})"
+    ids_to_delete = [id for id in to_delete]
+
+    cur.execute(query, ids_to_delete)
+    con.commit()
 
     # fetch editions for new records and add to editions table
+    full_editions = fetch_items.fetch_all_editions(to_insert)
+
+    # insert records
+    cur.executemany("INSERT INTO editions VALUES(?, ?, ?, ?, ?)", full_editions)
+    con.commit()
+
+    # log number of remaining rows
+    num_rows = cur.execute("SELECT COUNT(*) FROM bibs").fetchone()[0]
+    expected_rows = len(unchanged) - len(to_delete) + len(to_insert)
+    logger.info(f"Insert/delete operations complete. {num_rows} row now in db")
+    logger.info(f"This should match # unchanged - # to delete + # to insert, which is {expected_rows}")
 
 if __name__ == "__main__":
     con, cur = create_con()
     bibs(con, cur)
+    editions(con, cur)
