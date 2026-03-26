@@ -65,7 +65,6 @@ def bibs(con, cur):
 # Editions
 ########################################################
 def editions(con, cur):
-
     # use bib table to generate diff with editions table
     res = cur.execute("SELECT editionId FROM bibs").fetchall()
     bib_e_ids = {r[0] for r in res}
