@@ -4,7 +4,7 @@ import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-CONFIG = {"searchText":"*","pageSize":10}
+CONFIG = {"searchText":"*","pageSize":1}
 
 def fetch_bibs(pageNum=0, get_pages=False):
     logger.info(f"Fetching bibs with parameters searchText:{CONFIG.get("searchText")} and pageSize:{CONFIG.get("pageSize")}")
