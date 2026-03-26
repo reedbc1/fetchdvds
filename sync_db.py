@@ -19,6 +19,7 @@ def create_con():
     cur.execute("CREATE TABLE IF NOT EXISTS bibs(id, title, publicationDate, coverUrl, editionId)")
     cur.execute("CREATE TABLE IF NOT EXISTS editions(id, author, itemLanguage, subjects, summary)")
     return (con, cur)
+
 ########################################################
 # Bibs
 ########################################################
@@ -70,7 +71,7 @@ def editions(con, cur):
 
     res = cur.execute("SELECT id from editions").fetchall()
     edition_ids = {r[0] for r in res}
-    
+
     # use bib table to generate diff with editions table
 
     # delete records in editions table not in bib table
