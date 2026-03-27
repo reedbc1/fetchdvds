@@ -6,7 +6,7 @@ import math
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-CONFIG = {"searchText":"potatoes","pageSize":10,"pageLimit":1}
+CONFIG = {"searchText":"potatoes","pageSize":10,"pageLimit":5}
 
 def fetch_bibs(pageNum=0, get_pages=False):
     logger.info(f"Fetching page {pageNum}")
@@ -45,7 +45,7 @@ def fetch_bibs(pageNum=0, get_pages=False):
         "locationIds": [
             "59"
         ],
-        "pageNum": CONFIG.get("pageNum", ""),
+        "pageNum": pageNum,
         "pageSize": CONFIG.get("pageSize", ""),
         "resourceType": "FormatGroup"
     }
@@ -122,7 +122,7 @@ def fetch_edition(id):
 
 def fetch_all_bibs():
     if CONFIG.get("pageLimit"):
-        total_pages = CONFIG.get("pageLimit")
+        total_pages = CONFIG.get("pageLimit") - 1
     else:
         total_pages = fetch_bibs(get_pages=True)
 
@@ -131,7 +131,7 @@ def fetch_all_bibs():
     for i in range(0, total_pages + 1):
         bibs, ids = fetch_bibs(pageNum = i)
         all_bibs += bibs
-        all_ids.update(ids)
+        all_ids = all_ids | ids
 
     return all_bibs, all_ids
 
@@ -142,6 +142,18 @@ def fetch_all_editions(edition_ids: list):
     return editions
     
 if __name__ == "__main__":
-    all_bibs, all_ids = fetch_all_bibs()
+    all_bibs, all_ids, all_ids_test = fetch_all_bibs()
     # edition = fetch_edition("5dea2497-dff9-11ed-8960-5526fbe53189")
     print(len(all_ids))
+    print(len(all_ids_test))
+    total = 0
+    for li in all_ids_test:
+        total += len(li)
+
+    print(total)
+
+    my_set = set()
+    for li in all_ids_test:
+        my_set = my_set | li
+    
+    print(len(my_set))
