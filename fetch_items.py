@@ -6,7 +6,7 @@ import math
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-CONFIG = {"searchText":"potatoes","pageSize":100}
+CONFIG = {"searchText":"potatoes","pageSize":10,"pageLimit":1}
 
 def fetch_bibs(pageNum=0, get_pages=False):
     logger.info(f"Fetching page {pageNum}")
@@ -106,22 +106,26 @@ def fetch_edition(id):
             for subject in v:
                 subjects.append(subject)
     try:
-        author = ", ".join(e.get("author"))
+        author = ", ".join(e.get("author", []))
     except Exception:
         author = e.get("author")
 
     edition_info = (
         id,
         author,
-        ", ".join(e.get("itemLanguage")),
+        ", ".join(e.get("itemLanguage", [])),
         ", ".join(subjects),
-        ", ".join(e.get("noteSummary"))
+        ", ".join(e.get("noteSummary", []))
     )
 
     return edition_info
 
 def fetch_all_bibs():
-    total_pages = fetch_bibs(get_pages=True)
+    if CONFIG.get("pageLimit"):
+        total_pages = CONFIG.get("pageLimit")
+    else:
+        total_pages = fetch_bibs(get_pages=True)
+
     all_bibs = []
     all_ids = set()
     for i in range(0, total_pages + 1):
@@ -138,5 +142,6 @@ def fetch_all_editions(edition_ids: list):
     return editions
     
 if __name__ == "__main__":
-    bibs = fetch_all_bibs()
-    print(bibs)
+    all_bibs, all_ids = fetch_all_bibs()
+    # edition = fetch_edition("5dea2497-dff9-11ed-8960-5526fbe53189")
+    print(len(all_ids))
