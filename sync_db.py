@@ -54,12 +54,6 @@ def bibs(con, cur):
     cur.execute(query, ids_to_delete)
     con.commit()
 
-    # log number of remaining rows
-    # num_rows = cur.execute("SELECT COUNT(*) FROM bibs").fetchone()[0]
-    # expected_rows = len(unchanged) - len(to_delete) + len(to_insert)
-    # logger.info(f"Insert/delete operations complete. {num_rows} row now in db")
-    # logger.info(f"This should match # unchanged - # to delete + # to insert, which is {expected_rows}")
-
 ########################################################
 # Editions
 ########################################################
@@ -95,12 +89,6 @@ def editions(con, cur):
     # insert records
     cur.executemany("INSERT INTO editions VALUES(?, ?, ?, ?, ?)", full_editions)
     con.commit()
-
-    # log number of remaining rows
-    # num_rows = cur.execute("SELECT COUNT(*) FROM bibs").fetchone()[0]
-    # expected_rows = len(unchanged) - len(to_delete) + len(to_insert)
-    # logger.info(f"Insert/delete operations complete. {num_rows} row now in db")
-    # logger.info(f"This should match # unchanged - # to delete + # to insert, which is {expected_rows}")
 
 def sync():
     logger.info("starting sync...")
