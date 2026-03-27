@@ -2,6 +2,7 @@
 import sqlite3
 import fetch_items
 import logging
+import asyncio
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -25,7 +26,7 @@ def create_con():
 ########################################################
 def bibs(con, cur):
     # fetch bibs with API
-    api_data, api_ids = fetch_items.fetch_all_bibs()
+    api_data, api_ids = asyncio.run(fetch_items.fetch_all_bibs())
 
     # generate diff with bib table (insert/delete/unchanged)
     res = cur.execute("SELECT id FROM bibs").fetchall()

@@ -2,13 +2,14 @@ import requests
 import logging
 import re
 import math
+import asyncio
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 CONFIG = {"searchText":"potatoes","pageSize":10,"pageLimit":1}
 
-def fetch_bibs(pageNum=0, get_pages=False):
+async def fetch_bibs(pageNum=0, get_pages=False):
     logger.info(f"Fetching page {pageNum}")
 
     url = "https://na2.iiivega.com/api/search-result/search/format-groups"
@@ -120,20 +121,34 @@ def fetch_edition(id):
 
     return edition_info
 
-def fetch_all_bibs():
+async def fetch_all_bibs():
     if CONFIG.get("pageLimit"):
         total_pages = CONFIG.get("pageLimit")
     else:
         total_pages = fetch_bibs(get_pages=True)
 
-    all_bibs = []
-    all_ids = set()
-    for i in range(0, total_pages + 1):
-        bibs, ids = fetch_bibs(pageNum = i)
-        all_bibs += bibs
-        all_ids.update(ids)
+    # all_bibs = []
+    # all_ids = set()
+    # for i in range(0, total_pages + 1):
+    #     bibs, ids = fetch_bibs(pageNum = i)
+    #     all_bibs += bibs
+    #     all_ids.update(ids)
 
-    return all_bibs, all_ids
+    # return all_bibs, all_ids
+    coroutines = [fetch_bibs(pageNum=i) for i in range(0, total_pages + 1)]
+    results = await asyncio.gather(*coroutines)
+
+    all_bibs, all_ids =zip(*results)
+    
+    a_b = []
+    for item in all_bibs:
+        a_b += item
+    
+    a_i = set()
+    for item in all_ids:
+        a_i = a_i | item
+    
+    return a_b, a_i
 
 def fetch_all_editions(edition_ids: list):
     editions = []
@@ -142,6 +157,8 @@ def fetch_all_editions(edition_ids: list):
     return editions
     
 if __name__ == "__main__":
-    all_bibs, all_ids = fetch_all_bibs()
+    # all_bibs, all_ids = fetch_all_bibs()
     # edition = fetch_edition("5dea2497-dff9-11ed-8960-5526fbe53189")
-    print(len(all_ids))
+    # print(len(all_ids))
+    all_bibs, all_ids = asyncio.run(fetch_all_bibs())
+    

@@ -5,6 +5,5 @@ new_cur = new_con.cursor()
 
 # new_cur.execute("DELETE FROM bibs WHERE 1=1")
 
-res = new_cur.execute("SELECT * FROM editions")
-results = res.fetchall()
-print(results)
+res = new_cur.execute("DELETE FROM bibs WHERE 1=1")
+new_con.commit()
