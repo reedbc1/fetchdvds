@@ -1,7 +1,5 @@
-import requests
 import logging
 import re
-import math
 import asyncio
 import httpx
 

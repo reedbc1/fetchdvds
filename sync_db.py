@@ -85,7 +85,7 @@ def editions(con, cur):
     con.commit()
 
     # fetch editions for new records and add to editions table
-    full_editions = fetch_items.fetch_all_editions(to_insert)
+    full_editions = asyncio.run(fetch_items.fetch_all_editions(to_insert))
 
     # insert records
     cur.executemany("INSERT INTO editions VALUES(?, ?, ?, ?, ?)", full_editions)
