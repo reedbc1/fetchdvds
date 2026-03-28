@@ -35,7 +35,7 @@ async def fetch_bibs(pageNum: int = 0, get_pages: bool = False):
 
     payload: dict = {
         "searchText": CONFIG.get("searchText", ""),
-        "sorting": "relevance",
+        "sorting": "title",
         "sortOrder": "asc",
         "searchType": "everything",
         "universalLimiterIds": [
@@ -78,53 +78,54 @@ async def fetch_bibs(pageNum: int = 0, get_pages: bool = False):
         ids.add(r.get("id"))
     return parsed, ids
 
-async def fetch_edition(id: str):
-    url: str = f"https://na2.iiivega.com/api/search-result/editions/{id}"
-    headers: dict = {
-        "accept": "application/json, text/plain, */*",
-        "accept-language": "en-US,en;q=0.9",
-        "anonymous-user-id": "8f979f0f-2cda-46d7-9da5-4c3dddec18b0",
-        "api-version": "1",
-        "iii-customer-domain": "slouc.na2.iiivega.com",
-        "iii-host-domain": "slouc.na2.iiivega.com",
-        "priority": "u=1, i",
-        "sec-ch-ua": "Chromium;v=146, Not-A.Brand;v=24, Google Chrome;v=146",
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": "\"Windows\"",
-        "sec-fetch-dest": "empty",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "same-site",
-        "Referer": "https://slouc.na2.iiivega.com/"
-    }
+async def fetch_edition(id: str, sem: asyncio.Semaphore):
+    async with sem:
+        url: str = f"https://na2.iiivega.com/api/search-result/editions/{id}"
+        headers: dict = {
+            "accept": "application/json, text/plain, */*",
+            "accept-language": "en-US,en;q=0.9",
+            "anonymous-user-id": "8f979f0f-2cda-46d7-9da5-4c3dddec18b0",
+            "api-version": "1",
+            "iii-customer-domain": "slouc.na2.iiivega.com",
+            "iii-host-domain": "slouc.na2.iiivega.com",
+            "priority": "u=1, i",
+            "sec-ch-ua": "Chromium;v=146, Not-A.Brand;v=24, Google Chrome;v=146",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-site",
+            "Referer": "https://slouc.na2.iiivega.com/"
+        }
 
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url=url, headers=headers)
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url=url, headers=headers)
 
-    response.raise_for_status()
+        response.raise_for_status()
 
-    data: dict = response.json()
-    e: dict = data.get("edition", {})
+        data: dict = response.json()
+        e: dict = data.get("edition", {})
 
-    # create subjects string
-    subjects: list = []
-    for k, v in e.items():
-        if re.match("subj", k):
-            for subject in v:
-                subjects.append(subject)
-    try:
-        author: str = ", ".join(e.get("author", []))
-    except Exception:
-        author: str = e.get("author")
+        # create subjects string
+        subjects: list = []
+        for k, v in e.items():
+            if re.match("subj", k):
+                for subject in v:
+                    subjects.append(subject)
+        try:
+            author: str = ", ".join(e.get("author", []))
+        except Exception:
+            author: str = e.get("author")
 
-    edition_info: tuple = (
-        id,
-        author,
-        ", ".join(e.get("itemLanguage", [])),
-        ", ".join(subjects),
-        ", ".join(e.get("noteSummary", []))
-    )
+        edition_info: tuple = (
+            id,
+            author,
+            ", ".join(e.get("itemLanguage", [])),
+            ", ".join(subjects),
+            ", ".join(e.get("noteSummary", []))
+        )
 
-    return edition_info
+        return edition_info
 
 async def fetch_all_bibs():
     if CONFIG.get("pageLimit"):
@@ -155,7 +156,8 @@ async def fetch_all_bibs():
     return all_bibs, all_ids
 
 async def fetch_all_editions(edition_ids: list):
-    coroutines = [fetch_edition(id) for id in edition_ids]
+    sem = asyncio.Semaphore(5)
+    coroutines = [fetch_edition(id, sem) for id in edition_ids]
     editions = await asyncio.gather(*coroutines)
     return editions
     
@@ -166,5 +168,4 @@ if __name__ == "__main__":
     all_bibs, all_ids = asyncio.run(fetch_all_bibs())
     # result = asyncio.run(fetch_all_editions({"5dea2497-dff9-11ed-8960-5526fbe53189"}))
     print(len(all_ids))
-    print(all_ids)
     
