@@ -2,11 +2,18 @@ import logging
 import re
 import asyncio
 import httpx
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-CONFIG = {"searchText":"potatoes","pageSize":10,"pageLimit":None}
+@dataclass
+class Config:
+    searchText: str
+    pageSize: int
+    pageLimit: int | None # Must be greater than 0
+
+CONFIG = Config(searchText="potatoes", pageSize=10, pageLimit=None)
 
 async def fetch_bibs(sem: asyncio.Semaphore, pageNum: int = 0, get_pages: bool = False):
     async with sem:
@@ -34,7 +41,7 @@ async def fetch_bibs(sem: asyncio.Semaphore, pageNum: int = 0, get_pages: bool =
         }
 
         payload: dict = {
-            "searchText": CONFIG.get("searchText", ""),
+            "searchText": CONFIG.searchText,
             "sorting": "title",
             "sortOrder": "asc",
             "searchType": "everything",
@@ -48,7 +55,7 @@ async def fetch_bibs(sem: asyncio.Semaphore, pageNum: int = 0, get_pages: bool =
                 "59"
             ],
             "pageNum": pageNum,
-            "pageSize": CONFIG.get("pageSize", ""),
+            "pageSize": CONFIG.pageSize,
             "resourceType": "FormatGroup"
         }
 
@@ -130,8 +137,8 @@ async def fetch_edition(id: str, sem: asyncio.Semaphore):
 async def fetch_all_bibs():
     sem = asyncio.Semaphore(5)
 
-    if CONFIG.get("pageLimit"):
-        total_pages: int = CONFIG.get("pageLimit") -1
+    if CONFIG.pageLimit:
+        total_pages: int = CONFIG.pageLimit - 1
     else:
         total_pages: int = await fetch_bibs(sem = sem, get_pages=True)
 
