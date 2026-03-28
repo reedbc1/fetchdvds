@@ -9,7 +9,9 @@ logging.basicConfig(level=logging.INFO)
 CONFIG = {"searchText":"potatoes","pageSize":10,"pageLimit":3}
 
 async def fetch_bibs(pageNum: int = 0, get_pages: bool = False):
-    logger.info(f"Fetching page {pageNum}")
+    
+    if not get_pages:
+        logger.info(f"Fetching page {pageNum}")
 
     url: str = "https://na2.iiivega.com/api/search-result/search/format-groups"
 
@@ -45,7 +47,7 @@ async def fetch_bibs(pageNum: int = 0, get_pages: bool = False):
         "locationIds": [
             "59"
         ],
-        "pageNum": CONFIG.get("pageNum", ""),
+        "pageNum": pageNum,
         "pageSize": CONFIG.get("pageSize", ""),
         "resourceType": "FormatGroup"
     }
@@ -142,7 +144,6 @@ async def fetch_all_bibs():
     results: list = await asyncio.gather(*coroutines)
 
     bib_list, id_list =zip(*results)
-    print(id_list)
     all_bibs = []
     for item in bib_list:
         all_bibs += item
@@ -164,6 +165,6 @@ if __name__ == "__main__":
     # print(len(all_ids))
     all_bibs, all_ids = asyncio.run(fetch_all_bibs())
     # result = asyncio.run(fetch_all_editions({"5dea2497-dff9-11ed-8960-5526fbe53189"}))
-    print(len(all_bibs))
+    print(len(all_ids))
     print(all_ids)
     

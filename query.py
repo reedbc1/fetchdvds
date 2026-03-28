@@ -1,9 +1,7 @@
 import sqlite3
 
-new_con = sqlite3.connect(".db")
-new_cur = new_con.cursor()
+con = sqlite3.connect(".db")
+cur = con.cursor()
 
-# new_cur.execute("DELETE FROM bibs WHERE 1=1")
-
-res = new_cur.execute("DELETE FROM bibs WHERE 1=1")
-new_con.commit()
+result = cur.execute("SELECT COUNT(*) from editions;").fetchone()
+print(result)
