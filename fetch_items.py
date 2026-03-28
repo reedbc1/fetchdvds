@@ -6,14 +6,14 @@ import httpx
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-CONFIG = {"searchText":"potatoes","pageSize":10,"pageLimit":1}
+CONFIG = {"searchText":"potatoes","pageSize":10,"pageLimit":3}
 
-async def fetch_bibs(pageNum=0, get_pages=False):
+async def fetch_bibs(pageNum: int = 0, get_pages: bool = False):
     logger.info(f"Fetching page {pageNum}")
 
-    url = "https://na2.iiivega.com/api/search-result/search/format-groups"
+    url: str = "https://na2.iiivega.com/api/search-result/search/format-groups"
 
-    headers= {
+    headers: dict = {
         "accept": "application/json, text/plain, */*",
         "accept-language": "en-US,en;q=0.9",
         "anonymous-user-id": "86d9e401-ea99-4bc3-a5aa-08a9a00a9e0e",
@@ -31,7 +31,7 @@ async def fetch_bibs(pageNum=0, get_pages=False):
         "Referer": "https://slouc.na2.iiivega.com/"
     }
 
-    payload = {
+    payload: dict = {
         "searchText": CONFIG.get("searchText", ""),
         "sorting": "relevance",
         "sortOrder": "asc",
@@ -54,14 +54,14 @@ async def fetch_bibs(pageNum=0, get_pages=False):
         response = await client.post(url=url, headers=headers, json=payload)
 
     response.raise_for_status()
-    records = response.json()
+    records: dict = response.json()
 
     if get_pages:
-        total_pages = records.get('totalPages')
+        total_pages: int = records.get('totalPages')
         return total_pages
 
-    parsed = []
-    ids = set()
+    parsed: dict = []
+    ids: set = set()
 
     for r in records.get('data'):
         parsed.append(
@@ -76,9 +76,9 @@ async def fetch_bibs(pageNum=0, get_pages=False):
         ids.add(r.get("id"))
     return parsed, ids
 
-async def fetch_edition(id):
-    url = f"https://na2.iiivega.com/api/search-result/editions/{id}"
-    headers = {
+async def fetch_edition(id: str):
+    url: str = f"https://na2.iiivega.com/api/search-result/editions/{id}"
+    headers: dict = {
         "accept": "application/json, text/plain, */*",
         "accept-language": "en-US,en;q=0.9",
         "anonymous-user-id": "8f979f0f-2cda-46d7-9da5-4c3dddec18b0",
@@ -100,21 +100,21 @@ async def fetch_edition(id):
 
     response.raise_for_status()
 
-    data = response.json()
-    e = data.get("edition", {})
+    data: dict = response.json()
+    e: dict = data.get("edition", {})
 
     # create subjects string
-    subjects = []
+    subjects: list = []
     for k, v in e.items():
         if re.match("subj", k):
             for subject in v:
                 subjects.append(subject)
     try:
-        author = ", ".join(e.get("author", []))
+        author: str = ", ".join(e.get("author", []))
     except Exception:
-        author = e.get("author")
+        author: str = e.get("author")
 
-    edition_info = (
+    edition_info: tuple = (
         id,
         author,
         ", ".join(e.get("itemLanguage", [])),
@@ -126,9 +126,9 @@ async def fetch_edition(id):
 
 async def fetch_all_bibs():
     if CONFIG.get("pageLimit"):
-        total_pages = CONFIG.get("pageLimit")
+        total_pages: int = CONFIG.get("pageLimit") -1
     else:
-        total_pages = fetch_bibs(get_pages=True)
+        total_pages: int = fetch_bibs(get_pages=True)
 
     # all_bibs = []
     # all_ids = set()
@@ -138,17 +138,17 @@ async def fetch_all_bibs():
     #     all_ids.update(ids)
 
     # return all_bibs, all_ids
-    coroutines = [fetch_bibs(pageNum=i) for i in range(0, total_pages + 1)]
-    results = await asyncio.gather(*coroutines)
+    coroutines: list = [fetch_bibs(pageNum=i) for i in range(0, total_pages + 1)]
+    results: list = await asyncio.gather(*coroutines)
 
     bib_list, id_list =zip(*results)
-    
+    print(id_list)
     all_bibs = []
-    for item in all_bibs:
+    for item in bib_list:
         all_bibs += item
     
     all_ids = set()
-    for item in all_ids:
+    for item in id_list:
         all_ids = all_ids | item
     
     return all_bibs, all_ids
@@ -163,6 +163,7 @@ if __name__ == "__main__":
     # edition = fetch_edition("5dea2497-dff9-11ed-8960-5526fbe53189")
     # print(len(all_ids))
     all_bibs, all_ids = asyncio.run(fetch_all_bibs())
-    result = asyncio.run(fetch_all_editions({"5dea2497-dff9-11ed-8960-5526fbe53189"}))
-    print(result)
+    # result = asyncio.run(fetch_all_editions({"5dea2497-dff9-11ed-8960-5526fbe53189"}))
+    print(len(all_bibs))
+    print(all_ids)
     
