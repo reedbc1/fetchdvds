@@ -6,7 +6,7 @@ import httpx
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-CONFIG = {"searchText":"potatoes","pageSize":10,"pageLimit":3}
+CONFIG = {"searchText":"potatoes","pageSize":10,"pageLimit":None}
 
 async def fetch_bibs(sem: asyncio.Semaphore, pageNum: int = 0, get_pages: bool = False):
     async with sem:

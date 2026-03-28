@@ -1,2 +1,2 @@
 # To-Do
-- add limiter with semaphore
+- switch out CONFIG for dataclass in fetch_items
