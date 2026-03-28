@@ -3,6 +3,7 @@ import logging
 import re
 import math
 import asyncio
+import httpx
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -51,7 +52,9 @@ async def fetch_bibs(pageNum=0, get_pages=False):
         "resourceType": "FormatGroup"
     }
 
-    response = requests.post(url=url, headers=headers, json=payload)
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url=url, headers=headers, json=payload)
+
     response.raise_for_status()
     records = response.json()
 
@@ -75,7 +78,7 @@ async def fetch_bibs(pageNum=0, get_pages=False):
         ids.add(r.get("id"))
     return parsed, ids
 
-def fetch_edition(id):
+async def fetch_edition(id):
     url = f"https://na2.iiivega.com/api/search-result/editions/{id}"
     headers = {
         "accept": "application/json, text/plain, */*",
@@ -94,7 +97,9 @@ def fetch_edition(id):
         "Referer": "https://slouc.na2.iiivega.com/"
     }
 
-    response = requests.get(url=url, headers=headers)
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url=url, headers=headers)
+
     response.raise_for_status()
 
     data = response.json()
@@ -138,22 +143,21 @@ async def fetch_all_bibs():
     coroutines = [fetch_bibs(pageNum=i) for i in range(0, total_pages + 1)]
     results = await asyncio.gather(*coroutines)
 
-    all_bibs, all_ids =zip(*results)
+    bib_list, id_list =zip(*results)
     
-    a_b = []
+    all_bibs = []
     for item in all_bibs:
-        a_b += item
+        all_bibs += item
     
-    a_i = set()
+    all_ids = set()
     for item in all_ids:
-        a_i = a_i | item
+        all_ids = all_ids | item
     
-    return a_b, a_i
+    return all_bibs, all_ids
 
-def fetch_all_editions(edition_ids: list):
-    editions = []
-    for id in edition_ids:
-        editions.append(fetch_edition(id))
+async def fetch_all_editions(edition_ids: list):
+    coroutines = [fetch_edition(id) for id in edition_ids]
+    editions = await asyncio.gather(*coroutines)
     return editions
     
 if __name__ == "__main__":
@@ -161,4 +165,6 @@ if __name__ == "__main__":
     # edition = fetch_edition("5dea2497-dff9-11ed-8960-5526fbe53189")
     # print(len(all_ids))
     all_bibs, all_ids = asyncio.run(fetch_all_bibs())
+    result = asyncio.run(fetch_all_editions({"5dea2497-dff9-11ed-8960-5526fbe53189"}))
+    print(result)
     
