@@ -17,4 +17,6 @@ def select_count():
     print(f"bib count: {b_count}\neditions count: {e_count}")
 
 if __name__ == "__main__":
-    select_count()
+    # select_count()
+    # del_rows()
+    ...

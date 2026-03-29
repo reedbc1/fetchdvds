@@ -1,2 +1,2 @@
 # To-Do
-- add caching
+- create embeddings

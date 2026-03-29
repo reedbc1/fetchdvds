@@ -16,16 +16,16 @@ def create_con():
     # connect to database
     con = sqlite3.connect(".db")
     cur = con.cursor()
-
-    # create tables if they don't exist
-    cur.execute("CREATE TABLE IF NOT EXISTS bibs(id, title, publicationDate, coverUrl, editionId)")
-    cur.execute("CREATE TABLE IF NOT EXISTS editions(id, author, itemLanguage, subjects, summary)")
     return (con, cur)
 
 ########################################################
 # Bibs
 ########################################################
+
 def bibs(con, cur):
+    # create table if it doesn't exist
+    cur.execute("CREATE TABLE IF NOT EXISTS bibs(id, title, publicationDate, coverUrl, editionId)")
+
     # fetch bibs with API
     api_data, api_ids = asyncio.run(fetch_items.fetch_all_bibs())
 
@@ -59,7 +59,11 @@ def bibs(con, cur):
 ########################################################
 # Editions
 ########################################################
+
 def editions(con, cur):
+    # create table if it doesn't exist
+    cur.execute("CREATE TABLE IF NOT EXISTS editions(id, author, itemLanguage, subjects, summary)")
+
     # use bib table to generate diff with editions table
     res = cur.execute("SELECT editionId FROM bibs").fetchall()
     bib_e_ids = {r[0] for r in res}
@@ -92,16 +96,48 @@ def editions(con, cur):
     cur.executemany("INSERT INTO editions VALUES(?, ?, ?, ?, ?)", full_editions)
     con.commit()
 
-def sync():
+########################################################
+# Sync
+########################################################
+
+def sync(con, cur):
     logger.info("starting sync...")
-    con, cur = create_con()
-    logger.info("################")
+    logger.info("################################")
     bibs(con, cur)
-    logger.info("################")
+    logger.info("################################")
     editions(con, cur)
-    logger.info("################")
+    logger.info("################################")
 
     logger.info("sync complete.")
 
+########################################################
+# Joining Tables
+########################################################
+
+def join_tables(con, cur):
+
+    # drop pre-existing table
+    cur.execute("DROP TABLE IF EXISTS records")
+    cur.execute("CREATE TABLE records(id, title, author, publicationDate, itemLanguage, subjects, summary, coverUrl)")
+    
+    # join bibs and editions on editionId = id
+    cur.execute("INSERT INTO records SELECT b.id, b.title, e.author, b.publicationDate, e.itemLanguage, e.subjects, e.summary, b.coverUrl FROM bibs b INNER JOIN editions e ON e.id = b.editionId;")
+    con.commit()
+
+### Emdeddings ###
+# create table: embeddings
+# id primary key, vector
+# if primary key not found in embeddings, create embedding
+# do not delete primary keys not used in API
+
+### Searching Embeddings ###
+# embed query search
+# cosine similarity with query vector and embeddings
+# return x nearest neighbors
+
+
+
 if __name__ == "__main__":
-    sync()
+    con, cur = create_con()
+    # sync(con, cur)
+    join_tables(con, cur)
