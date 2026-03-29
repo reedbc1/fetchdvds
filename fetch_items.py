@@ -3,9 +3,11 @@ import re
 import asyncio
 import httpx
 from dataclasses import dataclass
+from tqdm.asyncio import tqdm
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 @dataclass
 class Config:
@@ -17,8 +19,8 @@ CONFIG = Config(searchText="potatoes", pageSize=10, pageLimit=None)
 
 async def fetch_bibs(sem: asyncio.Semaphore, pageNum: int = 0, get_pages: bool = False):
     async with sem:
-        if not get_pages:
-            logger.info(f"Fetching page {pageNum}")
+        # if not get_pages:
+        #     logger.info(f"Fetching page {pageNum}")
 
         url: str = "https://na2.iiivega.com/api/search-result/search/format-groups"
 
@@ -144,7 +146,7 @@ async def fetch_all_bibs():
 
     # return all_bibs, all_ids
     coroutines: list = [fetch_bibs(sem=sem, pageNum=i) for i in range(0, total_pages + 1)]
-    results: list = await asyncio.gather(*coroutines)
+    results: list = await tqdm.gather(*coroutines, desc="fetching bibs...")
 
     bib_list, id_list =zip(*results)
     all_bibs = []
@@ -160,7 +162,7 @@ async def fetch_all_bibs():
 async def fetch_all_editions(edition_ids: list):
     sem = asyncio.Semaphore(5)
     coroutines = [fetch_edition(id, sem) for id in edition_ids]
-    editions = await asyncio.gather(*coroutines)
+    editions = await tqdm.gather(*coroutines, desc="fetching editions...")
     return editions
     
 if __name__ == "__main__":
@@ -168,6 +170,6 @@ if __name__ == "__main__":
     # edition = fetch_edition("5dea2497-dff9-11ed-8960-5526fbe53189")
     # print(len(all_ids))
     all_bibs, all_ids = asyncio.run(fetch_all_bibs())
-    # result = asyncio.run(fetch_all_editions({"5dea2497-dff9-11ed-8960-5526fbe53189"}))
+    result = asyncio.run(fetch_all_editions({"5dea2497-dff9-11ed-8960-5526fbe53189"}))
     print(len(all_ids))
     
