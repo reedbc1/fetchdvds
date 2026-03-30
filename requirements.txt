@@ -2,3 +2,6 @@ sqlalchemy
 requests
 asyncio
 httpx
+openai
+python-dotenv
+sqliteai-vector

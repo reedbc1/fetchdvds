@@ -1,8 +1,14 @@
 # imports
 import sqlite3
+import importlib.resources
 import fetch_items
 import logging
 import asyncio
+from openai import AsyncOpenAI
+from dotenv import load_dotenv
+from tqdm.asyncio import tqdm
+
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -13,9 +19,19 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 ########################################################
 
 def create_con():
-    # connect to database
+    # conect to database
     con = sqlite3.connect(".db")
     cur = con.cursor()
+
+    ext_path = importlib.resources.files("sqlite_vector.binaries") / "vector"
+
+    con.enable_load_extension(True)
+    con.load_extension(str(ext_path))
+    con.enable_load_extension(False)
+
+    # Now you can use sqlite-vector features in your SQL queries
+    print(con.execute("SELECT vector_version();").fetchone())
+    
     return (con, cur)
 
 ########################################################
@@ -124,20 +140,71 @@ def join_tables(con, cur):
     cur.execute("INSERT INTO records SELECT b.id, b.title, e.author, b.publicationDate, e.itemLanguage, e.subjects, e.summary, b.coverUrl FROM bibs b INNER JOIN editions e ON e.id = b.editionId;")
     con.commit()
 
-### Emdeddings ###
+########################################################
+# Embeddings
+########################################################
+
 # create table: embeddings
 # id primary key, vector
 # if primary key not found in embeddings, create embedding
 # do not delete primary keys not used in API
+
+# get text to put into embeddings model
+def get_collection(con, cur):
+    res = cur.execute("SELECT id, title, author, publicationDate, itemLanguage, subjects, summary FROM records")
+    records = res.fetchall()
+
+    field_names = ["title: ", ", author: ", ", publication date: ", ", lanugage: ", ", subjects: ", ", summary: "]
+    collection = []
+
+    for r in records:
+        id = r[0]
+        text = ""
+
+        for i in range(len(field_names)):
+            text += field_names[i] + r[i+1]
+
+        collection.append((id, text))
+
+    return collection
+
+# create embeddings for individual record
+async def create_embedding(client, id, text):
+    response = await client.embeddings.create(
+        input=text,
+        model="text-embedding-3-small"
+    )
+    embedding = response.data[0].embedding
+    return (id, str(embedding))
+
+# get embeddings for all records
+async def get_embeddings():
+    con, cur = create_con()
+    col = get_collection(con, cur)
+    client = AsyncOpenAI()
+    coroutines = [create_embedding(client, *record) for record in col]
+    embeddings = await tqdm.gather(*coroutines)
+    return embeddings
+
+# generate embeddings and put into table
+def embeddings_table(con, cur, embeddings):
+    cur.execute("DROP TABLE IF EXISTS embeddings")
+    cur.execute("CREATE TABLE IF NOT EXISTS embeddings(id, embedding BLOB)")
+    cur.executemany("INSERT INTO embeddings VALUES(?, vector_as_f32(?))", embeddings)
+    con.commit()
+
+# generate diff for records table and embeddings table
+# add embeddings in to_add set
+def add_embeddings():
+    ...
 
 ### Searching Embeddings ###
 # embed query search
 # cosine similarity with query vector and embeddings
 # return x nearest neighbors
 
-
-
 if __name__ == "__main__":
     con, cur = create_con()
-    # sync(con, cur)
-    join_tables(con, cur)
+    embeddings = asyncio.run(get_embeddings())
+    print(embeddings[0])
+    embeddings_table(con, cur, embeddings)
