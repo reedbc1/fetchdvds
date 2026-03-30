@@ -195,6 +195,7 @@ def embeddings_table(con, cur, embeddings):
 
 # generate diff for records table and embeddings table
 # add embeddings in to_add set
+# modfy get_collection to use diff
 def add_embeddings():
     ...
 
