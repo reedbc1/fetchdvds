@@ -28,9 +28,6 @@ def create_con():
     con.enable_load_extension(True)
     con.load_extension(str(ext_path))
     con.enable_load_extension(False)
-
-    # Now you can use sqlite-vector features in your SQL queries
-    print(con.execute("SELECT vector_version();").fetchone())
     
     return (con, cur)
 
@@ -144,15 +141,29 @@ def join_tables(con, cur):
 # Embeddings
 ########################################################
 
-# create table: embeddings
-# id primary key, vector
-# if primary key not found in embeddings, create embedding
-# do not delete primary keys not used in API
-
 # get text to put into embeddings model
 def get_collection(con, cur):
-    res = cur.execute("SELECT id, title, author, publicationDate, itemLanguage, subjects, summary FROM records")
-    records = res.fetchall()
+    # selects records where id is not in embeddings
+
+    query = """
+    SELECT
+        id,
+        title,
+        author,
+        publicationDate,
+        itemLanguage,
+        subjects,
+        summary
+    FROM records r
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM embeddings e
+        WHERE e.id = r.id
+    );
+    """
+    
+    cur.execute(query)
+    records = cur.fetchall()
 
     field_names = ["title: ", ", author: ", ", publication date: ", ", lanugage: ", ", subjects: ", ", summary: "]
     collection = []
@@ -193,12 +204,11 @@ def embeddings_table(con, cur, embeddings):
     cur.executemany("INSERT INTO embeddings VALUES(?, vector_as_f32(?))", embeddings)
     con.commit()
 
-# generate diff for records table and embeddings table
-# add embeddings in to_add set
-# modfy get_collection to use diff
-def add_embeddings():
-    ...
-
+# putting it all together
+def sync_embeddings(con, cur):
+    embeddings = asyncio.run(get_embeddings())
+    embeddings_table(con, cur, embeddings)
+    
 ### Searching Embeddings ###
 # embed query search
 # cosine similarity with query vector and embeddings
@@ -206,6 +216,5 @@ def add_embeddings():
 
 if __name__ == "__main__":
     con, cur = create_con()
-    embeddings = asyncio.run(get_embeddings())
-    print(embeddings[0])
-    embeddings_table(con, cur, embeddings)
+    sync(con, cur)
+    sync_embeddings(con, cur)
