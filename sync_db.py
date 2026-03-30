@@ -209,6 +209,8 @@ def embeddings_table(con, cur, embeddings):
 
 # putting it all together
 def sync_embeddings(con, cur):
+    logger.info("################################")
+    logger.info("syncing embeddings...")
     embeddings = asyncio.run(get_embeddings())
     embeddings_table(con, cur, embeddings)
 
