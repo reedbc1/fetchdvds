@@ -1,4 +1,7 @@
-# imports
+########################################################
+# Imports
+########################################################
+
 import sqlite3
 import importlib.resources
 import fetch_items
