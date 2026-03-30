@@ -208,7 +208,11 @@ def embeddings_table(con, cur, embeddings):
 def sync_embeddings(con, cur):
     embeddings = asyncio.run(get_embeddings())
     embeddings_table(con, cur, embeddings)
-    
+
+########################################################
+# Similarity Search
+########################################################
+
 ### Searching Embeddings ###
 # embed query search
 # cosine similarity with query vector and embeddings
