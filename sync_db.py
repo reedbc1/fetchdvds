@@ -160,9 +160,9 @@ def join_tables(con, cur):
     con.commit()
     logger.info("records table created.")
 
-########################################################
+######################################################################
 # Embeddings
-########################################################
+######################################################################
 
 # get text to put into embeddings model
 def get_collection(con, cur):
@@ -206,7 +206,7 @@ def get_collection(con, cur):
     return collection
 
 # create embeddings for individual record
-async def create_embedding(client, id, text):
+async def create_embedding(client, id: str, text: str):
     response = await client.embeddings.create(
         input=text,
         model="text-embedding-3-small"
@@ -237,9 +237,9 @@ def sync_embeddings(con, cur):
     cur.execute("SELECT COUNT(*) FROM embeddings;")
     logger.info("embeddings table updated.")
 
-########################################################
+######################################################################
 # Similarity Search
-########################################################
+######################################################################
 
 ### Searching Embeddings ###
 # embed query search
