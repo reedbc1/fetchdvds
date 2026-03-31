@@ -36,6 +36,41 @@ def create_con():
     
     return (con, cur)
 
+
+def ensure_embeddings_table(con, cur):
+    existing_table = cur.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='embeddings'"
+    ).fetchone()
+
+    if existing_table is None:
+        cur.execute("CREATE TABLE embeddings(id, embedding BLOB)")
+        con.commit()
+        return
+
+    columns = cur.execute("PRAGMA table_info(embeddings)").fetchall()
+    column_names = {column[1] for column in columns}
+
+    if "embedding" in column_names:
+        return
+
+    if "BLOB" in column_names:
+        logger.info(
+            "migrating legacy embeddings table schema from column 'BLOB' to 'embedding'..."
+        )
+        cur.execute("ALTER TABLE embeddings RENAME TO embeddings_legacy")
+        cur.execute("CREATE TABLE embeddings(id, embedding BLOB)")
+        cur.execute(
+            "INSERT INTO embeddings(id, embedding) "
+            "SELECT id, BLOB FROM embeddings_legacy"
+        )
+        cur.execute("DROP TABLE embeddings_legacy")
+        con.commit()
+        return
+
+    raise sqlite3.OperationalError(
+        "Could not find an 'embedding' column in table 'embeddings'."
+    )
+
 ######################################################################
 # Bibs
 ######################################################################
@@ -168,8 +203,7 @@ def join_tables(con, cur):
 
 # get text to put into embeddings model
 def get_collection(con, cur):
-    cur.execute("CREATE TABLE IF NOT EXISTS embeddings(id, BLOB embedding)")
-    con.commit()
+    ensure_embeddings_table(con, cur)
 
     # selects records where id is not in embeddings
     query = """
@@ -229,7 +263,11 @@ async def get_embeddings(col):
 
 # generate embeddings and put into table
 def embeddings_table(con, cur, embeddings):
-    cur.executemany("INSERT INTO embeddings VALUES(?, vector_as_f32(?))", embeddings)
+    ensure_embeddings_table(con, cur)
+    cur.executemany(
+        "INSERT INTO embeddings(id, embedding) VALUES(?, vector_as_f32(?))",
+        embeddings,
+    )
     con.commit()
 
 # putting it all together
@@ -256,6 +294,7 @@ def embed_query(query: str):
 
 # cosine similarity search
 def sim_search(con, cur):
+    ensure_embeddings_table(con, cur)
     q_embed = embed_query("test")
     # q_embed_prep = f"vector_as_f32('{q_embed}')"
     print(type(q_embed))
@@ -271,15 +310,15 @@ def sim_search(con, cur):
     query = f"""
     SELECT e.id, v.distance FROM embeddings AS e
     JOIN vector_quantize_scan('embeddings', 'embedding', vector_as_f32(?), 20) AS v
-    ON e.id = v.rowid;
+    ON e.rowid = v.rowid;
     """
     # vector_as_f32('[0.3, 1.0, 0.9, 3.2, 1.4,...]')
     res = cur.execute(query, (q_json,))
-    print(cur.fetchall())
+    print(res.fetchall())
 
 # return x nearest neighbors
 
 if __name__ == "__main__":
     con, cur = create_con()
-    sync(con, cur)
+    # sync(con, cur)
     sim_search(con, cur)
