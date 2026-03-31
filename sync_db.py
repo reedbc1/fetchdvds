@@ -7,6 +7,7 @@ import importlib.resources
 import fetch_items
 import logging
 import asyncio
+import json
 from openai import OpenAI, AsyncOpenAI
 from dotenv import load_dotenv
 from tqdm.asyncio import tqdm
@@ -167,8 +168,10 @@ def join_tables(con, cur):
 
 # get text to put into embeddings model
 def get_collection(con, cur):
-    # selects records where id is not in embeddings
+    cur.execute("CREATE TABLE IF NOT EXISTS embeddings(id, BLOB embedding)")
+    con.commit()
 
+    # selects records where id is not in embeddings
     query = """
     SELECT
         id,
@@ -226,7 +229,6 @@ async def get_embeddings(col):
 
 # generate embeddings and put into table
 def embeddings_table(con, cur, embeddings):
-    cur.execute("CREATE TABLE IF NOT EXISTS embeddings(id, embedding BLOB)")
     cur.executemany("INSERT INTO embeddings VALUES(?, vector_as_f32(?))", embeddings)
     con.commit()
 
@@ -255,8 +257,9 @@ def embed_query(query: str):
 # cosine similarity search
 def sim_search(con, cur):
     q_embed = embed_query("test")
-    q_embed_prep = f"vector_as_f32('{q_embed}')"
+    # q_embed_prep = f"vector_as_f32('{q_embed}')"
     print(type(q_embed))
+    q_json = json.dumps(q_embed)
 
     # initialize vector
     cur.execute("SELECT vector_init('embeddings', 'embedding', 'type=FLOAT32,dimension=1536');")
@@ -267,17 +270,16 @@ def sim_search(con, cur):
     # Run a nearest neighbor query on the quantized version (returns top 20 closest vectors)
     query = f"""
     SELECT e.id, v.distance FROM embeddings AS e
-    JOIN vector_quantize_scan('embeddings', 'embedding', '{q_embed}', 20) AS v
+    JOIN vector_quantize_scan('embeddings', 'embedding', vector_as_f32(?), 20) AS v
     ON e.id = v.rowid;
     """
     # vector_as_f32('[0.3, 1.0, 0.9, 3.2, 1.4,...]')
-    res = cur.execute(query).fetchall()
-    print(res)
-
+    res = cur.execute(query, (q_json,))
+    print(cur.fetchall())
 
 # return x nearest neighbors
 
 if __name__ == "__main__":
     con, cur = create_con()
-    # sync(con, cur)
+    sync(con, cur)
     sim_search(con, cur)
