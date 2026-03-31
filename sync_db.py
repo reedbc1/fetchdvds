@@ -123,7 +123,10 @@ def sync(con, cur):
     logger.info("################################")
     editions(con, cur)
     logger.info("################################")
-
+    join_tables(con, cur)
+    logger.info("################################")
+    sync_embeddings(con, cur)
+    logger.info("################################")
     logger.info("sync complete.")
 
 ########################################################
@@ -131,7 +134,7 @@ def sync(con, cur):
 ########################################################
 
 def join_tables(con, cur):
-
+    logger.info("creating records table...")
     # drop pre-existing table
     cur.execute("DROP TABLE IF EXISTS records")
     cur.execute("CREATE TABLE records(id, title, author, publicationDate, itemLanguage, subjects, summary, coverUrl)")
@@ -139,6 +142,7 @@ def join_tables(con, cur):
     # join bibs and editions on editionId = id
     cur.execute("INSERT INTO records SELECT b.id, b.title, e.author, b.publicationDate, e.itemLanguage, e.subjects, e.summary, b.coverUrl FROM bibs b INNER JOIN editions e ON e.id = b.editionId;")
     con.commit()
+    logger.info("records table created.")
 
 ########################################################
 # Embeddings
@@ -168,6 +172,9 @@ def get_collection(con, cur):
     cur.execute(query)
     records = cur.fetchall()
 
+    logger.info("embeddings diff:")
+    logger.info(f"to_insert: {len(records)}")
+
     field_names = ["title: ", ", author: ", ", publication date: ", ", lanugage: ", ", subjects: ", ", summary: "]
     collection = []
 
@@ -192,28 +199,27 @@ async def create_embedding(client, id, text):
     return (id, str(embedding))
 
 # get embeddings for all records
-async def get_embeddings():
+async def get_embeddings(col):
     con, cur = create_con()
-    col = get_collection(con, cur)
     client = AsyncOpenAI()
+    logger.info("creating embeddings...")
     coroutines = [create_embedding(client, *record) for record in col]
     embeddings = await tqdm.gather(*coroutines)
     return embeddings
 
 # generate embeddings and put into table
 def embeddings_table(con, cur, embeddings):
-    cur.execute("DROP TABLE IF EXISTS embeddings")
     cur.execute("CREATE TABLE IF NOT EXISTS embeddings(id, embedding BLOB)")
     cur.executemany("INSERT INTO embeddings VALUES(?, vector_as_f32(?))", embeddings)
     con.commit()
 
 # putting it all together
 def sync_embeddings(con, cur):
-    logger.info("################################")
-    logger.info("syncing embeddings...")
-    logger.inf("creating embeddings...")
-    embeddings = asyncio.run(get_embeddings())
+    col = get_collection(con, cur)
+    embeddings = asyncio.run(get_embeddings(col))
     embeddings_table(con, cur, embeddings)
+    cur.execute("SELECT COUNT(*) FROM embeddings;")
+    logger.info("embeddings table updated.")
 
 ########################################################
 # Similarity Search
@@ -227,4 +233,3 @@ def sync_embeddings(con, cur):
 if __name__ == "__main__":
     con, cur = create_con()
     sync(con, cur)
-    sync_embeddings(con, cur)

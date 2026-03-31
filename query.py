@@ -14,13 +14,15 @@ def del_rows():
 def select_count():
     b_count = cur.execute("SELECT COUNT(*) from bibs;").fetchone()
     e_count = cur.execute("SELECT COUNT(*) from editions;").fetchone()
+    em_count = cur.execute("SELECT COUNT(*) FROM embeddings").fetchone()
     print(f"bib count: {b_count}\neditions count: {e_count}")
+    print(f"embeddings count: {em_count}")
+    
 
 def select():
     res = cur.execute("SELECT * FROM embeddings")
     return res.fetchone()
 
 if __name__ == "__main__":
-    # select_count()
+    select_count()
     # del_rows()
-    print(select())
