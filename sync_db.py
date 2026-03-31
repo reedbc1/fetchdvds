@@ -1,6 +1,6 @@
-########################################################
+######################################################################
 # Imports
-########################################################
+######################################################################
 
 import sqlite3
 import importlib.resources
@@ -17,9 +17,9 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
-########################################################
+######################################################################
 # Initialize sqlite3
-########################################################
+######################################################################
 
 def create_con():
     # conect to database
@@ -34,9 +34,9 @@ def create_con():
     
     return (con, cur)
 
-########################################################
+######################################################################
 # Bibs
-########################################################
+######################################################################
 
 def bibs(con, cur):
     # create table if it doesn't exist
@@ -72,9 +72,9 @@ def bibs(con, cur):
     cur.execute(query, ids_to_delete)
     con.commit()
 
-########################################################
+######################################################################
 # Editions
-########################################################
+######################################################################
 
 def editions(con, cur):
     # create table if it doesn't exist
@@ -112,9 +112,9 @@ def editions(con, cur):
     cur.executemany("INSERT INTO editions VALUES(?, ?, ?, ?, ?)", full_editions)
     con.commit()
 
-########################################################
+######################################################################
 # Sync
-########################################################
+######################################################################
 
 def sync(con, cur):
     logger.info("starting sync...")
@@ -129,9 +129,9 @@ def sync(con, cur):
     logger.info("################################")
     logger.info("sync complete.")
 
-########################################################
+######################################################################
 # Joining Tables
-########################################################
+######################################################################
 
 def join_tables(con, cur):
     logger.info("creating records table...")
@@ -140,7 +140,23 @@ def join_tables(con, cur):
     cur.execute("CREATE TABLE records(id, title, author, publicationDate, itemLanguage, subjects, summary, coverUrl)")
     
     # join bibs and editions on editionId = id
-    cur.execute("INSERT INTO records SELECT b.id, b.title, e.author, b.publicationDate, e.itemLanguage, e.subjects, e.summary, b.coverUrl FROM bibs b INNER JOIN editions e ON e.id = b.editionId;")
+    query: str = """
+    INSERT INTO records 
+    SELECT 
+        b.id, 
+        b.title, 
+        e.author, 
+        b.publicationDate, 
+        e.itemLanguage, 
+        e.subjects, 
+        e.summary, 
+        b.coverUrl 
+    FROM bibs b 
+    INNER JOIN editions e 
+    ON e.id = b.editionId;
+    """
+
+    cur.execute(query)
     con.commit()
     logger.info("records table created.")
 
