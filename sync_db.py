@@ -7,7 +7,7 @@ import importlib.resources
 import fetch_items
 import logging
 import asyncio
-from openai import AsyncOpenAI
+from openai import OpenAI, AsyncOpenAI
 from dotenv import load_dotenv
 from tqdm.asyncio import tqdm
 
@@ -26,6 +26,7 @@ def create_con():
     con = sqlite3.connect(".db")
     cur = con.cursor()
 
+    # load sqliteai-vector extention
     ext_path = importlib.resources.files("sqlite_vector.binaries") / "vector"
 
     con.enable_load_extension(True)
@@ -241,11 +242,42 @@ def sync_embeddings(con, cur):
 # Similarity Search
 ######################################################################
 
-### Searching Embeddings ###
-# embed query search
-# cosine similarity with query vector and embeddings
+# embed query
+def embed_query(query: str):
+    client = OpenAI()
+    response = client.embeddings.create(
+        input=query,
+        model="text-embedding-3-small"
+    )
+    embedding = response.data[0].embedding
+    return embedding
+
+# cosine similarity search
+def sim_search(con, cur):
+    q_embed = embed_query("test")
+    q_embed_prep = f"vector_as_f32('{q_embed}')"
+    print(type(q_embed))
+
+    # initialize vector
+    cur.execute("SELECT vector_init('embeddings', 'embedding', 'type=FLOAT32,dimension=1536');")
+
+    # quantize vector
+    cur.execute("SELECT vector_quantize('embeddings', 'embedding');")
+
+    # Run a nearest neighbor query on the quantized version (returns top 20 closest vectors)
+    query = f"""
+    SELECT e.id, v.distance FROM embeddings AS e
+    JOIN vector_quantize_scan('embeddings', 'embedding', '{q_embed}', 20) AS v
+    ON e.id = v.rowid;
+    """
+    # vector_as_f32('[0.3, 1.0, 0.9, 3.2, 1.4,...]')
+    res = cur.execute(query).fetchall()
+    print(res)
+
+
 # return x nearest neighbors
 
 if __name__ == "__main__":
     con, cur = create_con()
-    sync(con, cur)
+    # sync(con, cur)
+    sim_search(con, cur)
