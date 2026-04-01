@@ -307,7 +307,7 @@ def sim_search(con, cur):
     cur.execute("SELECT vector_quantize('embeddings', 'embedding');")
 
     # Run a nearest neighbor query on the quantized version (returns top 20 closest vectors)
-    query = f"""
+    query = """
     SELECT e.id, v.distance FROM embeddings AS e
     JOIN vector_quantize_scan('embeddings', 'embedding', vector_as_f32(?), 20) AS v
     ON e.rowid = v.rowid;
