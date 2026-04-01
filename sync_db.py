@@ -316,7 +316,11 @@ def sim_search(con, cur):
     res = cur.execute(query, (q_json,))
     print(res.fetchall())
 
-# return x nearest neighbors
+# create temporary table of nearest n neighbors
+
+# inner join temporary table to records table
+
+# output results
 
 if __name__ == "__main__":
     con, cur = create_con()
