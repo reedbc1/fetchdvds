@@ -18,12 +18,11 @@ def select_count():
     em_count = cur.execute("SELECT COUNT(*) FROM embeddings").fetchone()
     print(f"bib count: {b_count}\neditions count: {e_count}")
     print(f"embeddings count: {em_count}")
-    
 
 def select():
-    res = cur.execute("SELECT * FROM embeddings")
-    return res.fetchone()
+    res = cur.execute("SELECT * FROM records")
+    return res.fetchall()
 
 if __name__ == "__main__":
     # select_count()
-    del_rows()
+    print(select())

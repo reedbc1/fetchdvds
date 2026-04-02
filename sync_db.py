@@ -318,9 +318,10 @@ def sim_search(con, cur, user_query: str):
     
     # inner join temporary table to records table
     query = """
-    SELECT r.* FROM records AS r
+    SELECT r.*, n.distance FROM records AS r
     INNER JOIN nearest_neighbors AS n
-    ON r.id = n.id;
+    ON r.id = n.id
+    ORDER BY n.distance;
     """
 
     res = cur.execute(query).fetchall()
