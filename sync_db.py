@@ -293,9 +293,9 @@ def embed_query(query: str):
     return embedding
 
 # cosine similarity search
-def sim_search(con, cur):
+def sim_search(con, cur, user_query: str):
     ensure_embeddings_table(con, cur)
-    q_embed = embed_query("test")
+    q_embed = embed_query(user_query)
     # q_embed_prep = f"vector_as_f32('{q_embed}')"
     print(type(q_embed))
     q_json = json.dumps(q_embed)
