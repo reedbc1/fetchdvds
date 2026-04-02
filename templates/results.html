@@ -5,11 +5,11 @@
 </head>
 <body>
     <ul id="results">
-    {% for item in results %}
-        <li>{{ item[0] }}</li>
+    {% for record in results %}
+        <li>{{ record }}</li>
     {% endfor %}
     </ul>
 
-    {# a comment #}
+    {# ['id', 'title', 'author', 'publicationDate', 'itemLanguage', 'subjects', 'summary', 'coverUrl'] #}
 </body>
 </html>

@@ -296,8 +296,6 @@ def embed_query(query: str):
 def sim_search(con, cur, user_query: str):
     ensure_embeddings_table(con, cur)
     q_embed = embed_query(user_query)
-    # q_embed_prep = f"vector_as_f32('{q_embed}')"
-    print(type(q_embed))
     q_json = json.dumps(q_embed)
 
     # initialize vector
@@ -330,8 +328,21 @@ def sim_search(con, cur, user_query: str):
     # output results
     return res
 
+def sql_to_json(con, cur, results):
+    col_names = cur.execute("PRAGMA table_info(records);").fetchall()
+    col_names = [tup[1] for tup in col_names]
+    print(col_names)
+    records = []
+    for tup in results:
+        record = {}
+        for i in range(len(col_names)):
+            record[col_names[i]] = tup[i]
+        records.append(record)
+    return records
+
 if __name__ == "__main__":
     con, cur = create_con()
-    sync(con, cur)
-    top_20 = sim_search(con, cur)
-    print(top_20)
+    # sync(con, cur)
+    top_20 = sim_search(con, cur, "test")
+    records = sql_to_json(con, cur, top_20)
+    print(records)
