@@ -306,23 +306,31 @@ def sim_search(con, cur):
     # quantize vector
     cur.execute("SELECT vector_quantize('embeddings', 'embedding');")
 
-    # Run a nearest neighbor query on the quantized version (returns top 20 closest vectors)
+    # create temporary table of nearest n neighbors
+    cur.execute("DROP TABLE IF EXISTS nearest_neighbors")
+
     query = """
+    CREATE TEMP TABLE IF NOT EXISTS nearest_neighbors AS
     SELECT e.id, v.distance FROM embeddings AS e
     JOIN vector_quantize_scan('embeddings', 'embedding', vector_as_f32(?), 20) AS v
     ON e.rowid = v.rowid;
     """
-    # vector_as_f32('[0.3, 1.0, 0.9, 3.2, 1.4,...]')
-    res = cur.execute(query, (q_json,))
-    print(res.fetchall())
 
-# create temporary table of nearest n neighbors
+    cur.execute(query, (q_json,))
+    
+    # inner join temporary table to records table
+    query = """
+    SELECT r.* FROM records AS r
+    INNER JOIN nearest_neighbors AS n
+    ON r.id = n.id;
+    """
 
-# inner join temporary table to records table
+    res = cur.execute(query).fetchall()
 
-# output results
+    # output results
+    return res
 
 if __name__ == "__main__":
     con, cur = create_con()
-    # sync(con, cur)
+    sync(con, cur)
     sim_search(con, cur)
