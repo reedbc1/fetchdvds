@@ -333,4 +333,5 @@ def sim_search(con, cur):
 if __name__ == "__main__":
     con, cur = create_con()
     sync(con, cur)
-    sim_search(con, cur)
+    top_20 = sim_search(con, cur)
+    print(top_20)
