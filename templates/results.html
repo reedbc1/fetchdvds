@@ -1,15 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>WR Semantic Search</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WR Semantic Search Results</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
-    <ul id="results">
-    {% for record in results %}
-        <li>{{ record }}</li>
-    {% endfor %}
-    </ul>
+<body class="page-results">
+  <header class="results-header">
+    <div class="results-header-inner">
+      <a class="brand-lockup" href="{{ url_for('index') }}">
+        <span class="brand-eyebrow">Search your collection</span>
+        <span class="brand-name">WR Semantic Search</span>
+      </a>
 
-    {# ['id', 'title', 'author', 'publicationDate', 'itemLanguage', 'subjects', 'summary', 'coverUrl'] #}
+      <form class="results-search-form" action="/search" method="get">
+        <label class="sr-only" for="search">Search the catalog</label>
+        <div class="search-container">
+          <input
+            type="text"
+            id="search"
+            name="query"
+            value="{{ query }}"
+            placeholder="Search books, authors, or subjects"
+            autocomplete="off"
+          >
+          <input type="submit" id="submit" value="Search">
+        </div>
+      </form>
+    </div>
+  </header>
+
+  <main class="results-page">
+    <section class="results-summary">
+      <p class="eyebrow">Results</p>
+      <h1 class="results-heading">
+        {% if query %}
+          Results for "{{ query }}"
+        {% else %}
+          Search Results
+        {% endif %}
+      </h1>
+      <p class="results-count">{{ results|length }} record{% if results|length != 1 %}s{% endif %} found</p>
+    </section>
+
+    {% if results %}
+      <section class="results-list" aria-label="Search results">
+        {% for record in results %}
+          <article class="result-card">
+            <div class="result-cover-wrap">
+              <img
+                class="result-cover"
+                src="{{ record['coverUrl'] }}"
+                alt="Cover of {{ record['title'] }}"
+                loading="lazy"
+              >
+            </div>
+
+            <div class="result-content">
+              <a
+                class="result-title"
+                href="https://slouc.na2.iiivega.com/search/card?id={{ record['id'] }}&entityType=FormatGroup"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {{ record['title'] }}
+              </a>
+
+              <p class="result-author">{{ record['author'] }}</p>
+
+              <div class="result-meta">
+                <span>Published {{ record['publicationDate'] }}</span>
+                <span>Language {{ record['itemLanguage'] }}</span>
+              </div>
+
+              <div class="result-detail">
+                <h2>Subjects</h2>
+                <p>{{ record['subjects'] }}</p>
+              </div>
+
+              <details class="result-summary">
+                <summary>Show summary</summary>
+                <p>{{ record['summary'] }}</p>
+              </details>
+            </div>
+          </article>
+        {% endfor %}
+      </section>
+    {% else %}
+      <section class="empty-state">
+        <h2>No results found</h2>
+        <p>Try a different title, author, or subject search.</p>
+      </section>
+    {% endif %}
+  </main>
 </body>
 </html>
