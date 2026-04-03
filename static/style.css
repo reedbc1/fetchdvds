@@ -1,0 +1,23 @@
+.search-container {
+    display: inline-block;
+}
+
+* {
+    color: red;
+}
+
+#title {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#submit, #search {
+    display: inline-block;
+}
+
+.search-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
