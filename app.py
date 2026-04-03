@@ -26,4 +26,5 @@ def index():
 def search(query=None):
     con, cur = sync_db.create_con()
     results = sync_db.sim_search(con, cur, user_query=query)
+    results = sync_db.sql_to_json(con, cur, results)
     return render_template('results.html', results=results)
