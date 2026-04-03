@@ -2,17 +2,19 @@
 <html lang="en">
 <head>
     <title>WR Semantic Search</title>
+    <link rel="stylesheet", href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <h1>WR Semantic Search</h1>
-    <form action="/search">
-        <label for="query">Query:</label><br>
-        <input type="text" id="search" name="query"><br>
-        <!-- 
-        <label for="num_results">Number of Results:</label><br>
-        <input type="text" id="num_results" name="num_results" value="20"> 
-        -->
-        <input type="submit">
-    </form>
+    <div class="search-container">
+        <form action="/search">
+            <input type="text" id="search" name="query" placeholder="Search"><br>
+            <!-- 
+            <label for="num_results">Number of Results:</label><br>
+            <input type="text" id="num_results" name="num_results" value="20"> 
+            -->
+            <input type="submit">
+        </form>
+    </div>
 </body>
 </html>
