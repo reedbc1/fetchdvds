@@ -1,4 +1,5 @@
-from flask import Flask, render_template, g
+from flask import Flask, render_template, g, request
+
 import sqlite3
 import sync_db
 
@@ -22,9 +23,10 @@ def close_connection(exception):
 def index():
     return render_template('index.html')
 
-@app.route("/search/<query>")
-def search(query=None):
+@app.route("/search")
+def search():
     con, cur = sync_db.create_con()
+    query = request.args.get("query", "Flask")
     results = sync_db.sim_search(con, cur, user_query=query)
     results = sync_db.sql_to_json(con, cur, results)
     return render_template('results.html', results=results)
