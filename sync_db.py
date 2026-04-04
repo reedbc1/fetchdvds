@@ -353,7 +353,7 @@ def sql_to_json(con, cur, results):
 
 if __name__ == "__main__":
     con, cur = create_con()
-    # sync(con, cur)
-    top_20 = sim_search(con, cur, "test")
-    records = sql_to_json(con, cur, top_20)
-    print(records)
+    sync(con, cur)
+    # top_20 = sim_search(con, cur, "test")
+    # records = sql_to_json(con, cur, top_20)
+    # print(records)
