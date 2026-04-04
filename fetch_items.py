@@ -171,5 +171,4 @@ if __name__ == "__main__":
     # print(len(all_ids))
     all_bibs, all_ids = asyncio.run(fetch_all_bibs())
     result = asyncio.run(fetch_all_editions({"5dea2497-dff9-11ed-8960-5526fbe53189"}))
-    print(len(all_ids))
     
