@@ -7,7 +7,7 @@ cur = con.cursor()
 def del_rows():
     cur.execute("DELETE FROM bibs WHERE 1=1;")
     cur.execute("DELETE FROM editions WHERE 1=1;")
-    cur.execute("DROP TABLE embeddings")
+    cur.execute("DELETE FROM embeddings WHERE 1=1")
     con.commit()
     print("All records deleted.")
 
@@ -25,4 +25,5 @@ def select():
 
 if __name__ == "__main__":
     # select_count()
-    print(select())
+    # print(select())
+    del_rows()
