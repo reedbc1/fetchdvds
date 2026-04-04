@@ -10,7 +10,8 @@ import asyncio
 import json
 from openai import OpenAI, AsyncOpenAI
 from dotenv import load_dotenv
-from tqdm.asyncio import tqdm
+import tqdm.asyncio
+import tqdm
 
 load_dotenv()
 
@@ -142,12 +143,21 @@ def editions(con, cur):
     cur.execute(query, ids_to_delete)
     con.commit()
 
-    # fetch editions for new records and add to editions table
-    full_editions = asyncio.run(fetch_items.fetch_all_editions(to_insert))
+    to_insert_list = list(to_insert)
 
-    # insert records
-    cur.executemany("INSERT INTO editions VALUES(?, ?, ?, ?, ?)", full_editions)
-    con.commit()
+    # fetch editions for new records and add to editions table
+    for i in tqdm.tqdm(range(0, len(to_insert_list), 100)):
+
+        if i + 99 <= len(to_insert_list):
+            j = i + 99
+        else:
+            j = len(to_insert_list) 
+        
+        editions_slice = asyncio.run(fetch_items.fetch_all_editions(to_insert_list[i:j]))
+
+        # insert records
+        cur.executemany("INSERT INTO editions VALUES(?, ?, ?, ?, ?)", editions_slice)
+        con.commit()
 
 ######################################################################
 # Sync
@@ -258,7 +268,7 @@ async def get_embeddings(col):
     client = AsyncOpenAI()
     logger.info("creating embeddings...")
     coroutines = [create_embedding(client, *record) for record in col]
-    embeddings = await tqdm.gather(*coroutines)
+    embeddings = await tqdm.asyncio.tqdm.gather(*coroutines)
     return embeddings
 
 # generate embeddings and put into table
