@@ -24,6 +24,6 @@ def select():
     return res.fetchall()
 
 if __name__ == "__main__":
-    # select_count()
+    select_count()
     # print(select())
-    del_rows()
+    # del_rows()

@@ -15,9 +15,9 @@ class Config:
     pageSize: int
     pageLimit: int | None # Must be greater than 0
 
-CONFIG = Config(searchText="potato", pageSize=10, pageLimit=None)
+CONFIG = Config(searchText="potato", pageSize=100, pageLimit=None)
 
-async def fetch_bibs(sem: asyncio.Semaphore, pageNum: int = 0, get_pages: bool = False):
+async def fetch_bibs(sem: asyncio.Semaphore, dateFrom: int, dateTo: int, pageNum: int = 0, get_pages: bool = False):
     async with sem:
         # if not get_pages:
         #     logger.info(f"Fetching page {pageNum}")
@@ -58,7 +58,9 @@ async def fetch_bibs(sem: asyncio.Semaphore, pageNum: int = 0, get_pages: bool =
             ],
             "pageNum": pageNum,
             "pageSize": CONFIG.pageSize,
-            "resourceType": "FormatGroup"
+            "resourceType": "FormatGroup",
+            "dateFrom": dateFrom,
+            "dateTo": dateTo,
         }
 
     async with httpx.AsyncClient() as client:
@@ -138,25 +140,32 @@ async def fetch_edition(id: str, sem: asyncio.Semaphore):
 
 async def fetch_all_bibs():
     sem = asyncio.Semaphore(5)
+    years = list(range(2000,2026))
 
-    if CONFIG.pageLimit:
-        total_pages: int = CONFIG.pageLimit - 1
-    else:
-        total_pages: int = await fetch_bibs(sem = sem, get_pages=True)
+    all_bibs = []
+    all_ids = set()
 
-    # return all_bibs, all_ids
-    coroutines: list = [fetch_bibs(sem=sem, pageNum=i) for i in range(0, total_pages + 1)]
+    # get from years 1 to 1999 first
+    all_bibs, all_ids = await bibs_loop(sem, 1, 1999, all_bibs, all_ids)
+    for year in years:
+        all_bibs, all_ids = await bibs_loop(sem, year, year, all_bibs, all_ids)
+    
+    return all_bibs, all_ids
+
+async def bibs_loop(sem: asyncio.Semaphore, dateFrom: int, dateTo: int, all_bibs: list, all_ids: set):
+    total_pages: int = await fetch_bibs(sem = sem, dateFrom=dateFrom, dateTo=dateTo, get_pages=True)
+
+    coroutines: list = [fetch_bibs(sem=sem, dateFrom=dateFrom, dateTo=dateTo,  pageNum=i) for i in range(0, total_pages + 1)]
     results: list = await tqdm.gather(*coroutines, desc="fetching bibs...")
 
     bib_list, id_list =zip(*results)
-    all_bibs = []
+    
     for item in bib_list:
         all_bibs += item
     
-    all_ids = set()
     for item in id_list:
         all_ids = all_ids | item
-    
+
     return all_bibs, all_ids
 
 async def fetch_all_editions(edition_ids: list):
@@ -168,7 +177,7 @@ async def fetch_all_editions(edition_ids: list):
 if __name__ == "__main__":
     # all_bibs, all_ids = fetch_all_bibs()
     # edition = fetch_edition("5dea2497-dff9-11ed-8960-5526fbe53189")
-    # print(len(all_ids))
     all_bibs, all_ids = asyncio.run(fetch_all_bibs())
-    result = asyncio.run(fetch_all_editions({"5dea2497-dff9-11ed-8960-5526fbe53189"}))
+    print(len(all_ids))
+    # result = asyncio.run(fetch_all_editions({"5dea2497-dff9-11ed-8960-5526fbe53189"}))
     
