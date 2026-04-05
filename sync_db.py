@@ -212,11 +212,10 @@ def join_tables(con, cur):
 ######################################################################
 
 # get text to put into embeddings model
-def get_collection(con, cur) -> list:
+def get_collection(con, cur, to_insert) -> list:
     ensure_embeddings_table(con, cur)
 
-    # selects records where id is not in embeddings
-    query = """
+    query = f"""
     SELECT
         id,
         title,
@@ -226,18 +225,12 @@ def get_collection(con, cur) -> list:
         subjects,
         summary
     FROM records r
-    WHERE NOT EXISTS (
-        SELECT 1
-        FROM embeddings e
-        WHERE e.id = r.id
-    );
+    WHERE id IN {tuple(to_insert)};
     """
     
     cur.execute(query)
     records = cur.fetchall()
-
-    logger.info("embeddings diff:")
-    logger.info(f"to_insert: {len(records)}")
+    logger.info("query completed.")
 
     field_names = ["title: ", ", author: ", ", publication date: ", ", lanugage: ", ", subjects: ", ", summary: "]
     collection = []
@@ -284,25 +277,29 @@ def embeddings_table(con, cur, embeddings):
 def sync_embeddings(con, cur):
     logger.info("starting sync_embeddings")
     
-    col = get_collection(con, cur)
-    
-    res = cur.execute("SELECT id FROM records").fetchall()
-    res_format = (item[0] for item in res)
+    # selects records where id is not in embeddings
+    alt_query = "SELECT id FROM embeddings;"
+    res1 = cur.execute(alt_query).fetchall()
+    em_ids = {item[0] for item in res1}
+    res2 = cur.execute("SELECT id FROM records").fetchall()
+    r_ids = {item[0] for item in res2}
 
-    to_insert = len(col)
-    to_del = cur.execute(f"SELECT COUNT(id) from embeddings where id NOT IN {res_format}").fetchone()
-    unchanged = cur.execute(f"SELECT COUNT(id) embeddings where id IN {res_format}").fetchone()
+    to_insert = r_ids - em_ids
+    to_delete = em_ids - r_ids
+    unchanged = em_ids & r_ids
 
     logger.info("embeddings diff:")
-    logger.info(f"to insert: {to_insert}")
-    logger.info(f"to delete: {to_del}")
-    logger.info(f"unchanged: {unchanged}")
+    logger.info(f"to insert: {len(to_insert)}")
+    logger.info(f"to delete: {len(to_delete)}")
+    logger.info(f"unchanged: {len(unchanged)}")
 
     # delete embeddings
-    cur.execute("DELETE FROM embeddings WHERE id NOT IN ?", res_format)
+    cur.execute(f"DELETE FROM embeddings WHERE id IN {tuple(to_delete)}")
     con.commit()
 
     # insert embeddings
+    col = get_collection(con, cur, to_insert)
+
     for i in range(0, len(col), 100):
         if i + 99 > len(col):
             j = len(col)
@@ -378,8 +375,8 @@ def sql_to_json(con, cur, results):
 
 if __name__ == "__main__":
     con, cur = create_con()
-    # sync(con, cur)
-    sync_embeddings(con, cur)
+    sync(con, cur)
+    # sync_embeddings(con, cur)
 
     # top_20 = sim_search(con, cur, "test")
     # records = sql_to_json(con, cur, top_20)

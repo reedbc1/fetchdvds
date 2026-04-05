@@ -22,8 +22,8 @@ def select_count():
     print(f"records count: {r_count}")
     print(f"embeddings count: {em_count}")
 
-def select():
-    res = cur.execute("SELECT COUNT(id) FROM bibs GROUP BY id HAVING COUNT(id)>1")
+def select(table):
+    res = cur.execute(f"SELECT COUNT(DISTINCT id) FROM {table} GROUP BY id HAVING COUNT(id)>1")
     return res.fetchall()
 
 def distinct_tables(table_name: str):
@@ -37,12 +37,20 @@ def distinct_tables(table_name: str):
     
     con.commit()
 
-def sync_r_and_em():
-    cur.execute("SELECT ")
+def remove_dup_em():
+    ids_to_remove = cur.execute("SELECT id, count(id) FROM embeddings group by id having count(id) > 1;").fetchall()
+    print(ids_to_remove)
+    list_to_remove = [item[0] for item in ids_to_remove]
+    tup_to_remove = tuple(list_to_remove)
+    print(tup_to_remove)
+    cur.execute(f"DELETE FROM embeddings WHERE id IN {tup_to_remove};")
+    con.commit()
 
 if __name__ == "__main__":
     # print(select())
     # print(select())
     # del_rows()
-    distinct_tables("records")
+    # distinct_tables("records")
+   
+    # remove_dup_em()
     select_count()
