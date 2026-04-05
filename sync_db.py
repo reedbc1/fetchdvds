@@ -25,7 +25,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 def create_con():
     # conect to database
-    con = sqlite3.connect(".db")
+    con = sqlite3.connect("items.db")
     cur = con.cursor()
 
     # load sqliteai-vector extention

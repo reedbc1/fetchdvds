@@ -1,7 +1,7 @@
 import sqlite3
 from sync_db import sql_to_json
 
-con = sqlite3.connect(".db")
+con = sqlite3.connect("items.db")
 cur = con.cursor()
 
 # Delete all from tables

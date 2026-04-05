@@ -5,7 +5,7 @@ import sync_db
 
 app = Flask(__name__)
 
-DATABASE = '/.db'
+DATABASE = '/items.db'
 
 def get_db():
     db = getattr(g, '_database', None)
