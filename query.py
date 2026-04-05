@@ -16,21 +16,33 @@ def del_rows():
 def select_count():
     b_count = cur.execute("SELECT COUNT(*) from bibs;").fetchone()
     e_count = cur.execute("SELECT COUNT(*) from editions;").fetchone()
-    em_count = cur.execute("SELECT COUNT(*) FROM embeddings").fetchone()
+    r_count = cur.execute("SELECT COUNT(*) FROM records;").fetchone()
+    em_count = cur.execute("SELECT COUNT(id) FROM embeddings").fetchone()
     print(f"bib count: {b_count}\neditions count: {e_count}")
+    print(f"records count: {r_count}")
     print(f"embeddings count: {em_count}")
 
 def select():
-    res = cur.execute("SELECT * FROM records")
+    res = cur.execute("SELECT COUNT(id) FROM bibs GROUP BY id HAVING COUNT(id)>1")
     return res.fetchall()
 
+def distinct_tables(table_name: str):
+    # cur.execute("CREATE TEMP TABLE temp_ids AS SELECT DISTINCT id FROM embeddings;")
+
+    cur.execute(f"CREATE TABLE new_table as SELECT DISTINCT * FROM {table_name};")
+    cur.execute(f"DROP TABLE {table_name};")
+
+    cur.execute(f"CREATE TABLE {table_name} AS SELECT DISTINCT * FROM new_table;")
+    cur.execute("DROP TABLE new_table;")
+    
+    con.commit()
+
+def sync_r_and_em():
+    cur.execute("SELECT ")
+
 if __name__ == "__main__":
-    # select_count()
+    # print(select())
     # print(select())
     # del_rows()
-    results = select()
-    records = sql_to_json(con, cur, results)
-    pub_dates = []
-    for r in records:
-        pub_dates.append(r.get("publicationDate"))
-    print(pub_dates)
+    distinct_tables("records")
+    select_count()
