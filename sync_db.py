@@ -153,7 +153,7 @@ def editions(con, cur):
         else:
             j = len(to_insert_list) 
         
-        editions_slice = asyncio.run(fetch_items.fetch_all_editions(to_insert_list[i:j]))
+        editions_slice = asyncio.run(fetch_items.fetch_all_editions(to_insert_list[i:j+1]))
 
         # insert records
         cur.executemany("INSERT INTO editions VALUES(?, ?, ?, ?, ?)", editions_slice)
@@ -212,7 +212,7 @@ def join_tables(con, cur):
 ######################################################################
 
 # get text to put into embeddings model
-def get_collection(con, cur):
+def get_collection(con, cur) -> list:
     ensure_embeddings_table(con, cur)
 
     # selects records where id is not in embeddings
@@ -282,10 +282,17 @@ def embeddings_table(con, cur, embeddings):
 
 # putting it all together
 def sync_embeddings(con, cur):
+    logger.info("starting sync_embeddings")
     col = get_collection(con, cur)
-    embeddings = asyncio.run(get_embeddings(col))
-    embeddings_table(con, cur, embeddings)
-    cur.execute("SELECT COUNT(*) FROM embeddings;")
+    for i in range(0, len(col), 100):
+        if i + 99 > len(col):
+            j = len(col)
+        else:
+            j = i + 99
+    
+        embeddings = asyncio.run(get_embeddings(col[i:j+1]))
+        embeddings_table(con, cur, embeddings)
+    # cur.execute("SELECT COUNT(*) FROM embeddings;")
     logger.info("embeddings table updated.")
 
 ######################################################################
@@ -353,7 +360,9 @@ def sql_to_json(con, cur, results):
 
 if __name__ == "__main__":
     con, cur = create_con()
-    sync(con, cur)
+    # sync(con, cur)
+    sync_embeddings(con, cur)
+
     # top_20 = sim_search(con, cur, "test")
     # records = sql_to_json(con, cur, top_20)
     # print(records)

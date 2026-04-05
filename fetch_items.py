@@ -64,7 +64,7 @@ async def fetch_bibs(sem: asyncio.Semaphore, dateFrom: int, dateTo: int, pageNum
             "dateTo": dateTo,
         }
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=None) as client:
         response = await client.post(url=url, headers=headers, json=payload)
 
     response.raise_for_status()
@@ -110,7 +110,7 @@ async def fetch_edition(id: str, sem: asyncio.Semaphore):
             "Referer": "https://slouc.na2.iiivega.com/"
         }
 
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=None) as client:
             response = await client.get(url=url, headers=headers)
 
         response.raise_for_status()
