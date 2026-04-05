@@ -16,7 +16,7 @@ class Config:
     pageSize: int
     pageLimit: int | None # Must be greater than 0
 
-CONFIG = Config(searchText="potato", pageSize=100, pageLimit=None)
+CONFIG = Config(searchText="*", pageSize=100, pageLimit=None)
 
 async def fetch_bibs(sem: asyncio.Semaphore, dateFrom: int, dateTo: int, pageNum: int = 0, get_pages: bool = False):
     async with sem:
