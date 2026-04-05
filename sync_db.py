@@ -283,7 +283,26 @@ def embeddings_table(con, cur, embeddings):
 # putting it all together
 def sync_embeddings(con, cur):
     logger.info("starting sync_embeddings")
+    
     col = get_collection(con, cur)
+    
+    res = cur.execute("SELECT id FROM records").fetchall()
+    res_format = (item[0] for item in res)
+
+    to_insert = len(col)
+    to_del = cur.execute(f"SELECT COUNT(id) from embeddings where id NOT IN {res_format}").fetchone()
+    unchanged = cur.execute(f"SELECT COUNT(id) embeddings where id IN {res_format}").fetchone()
+
+    logger.info("embeddings diff:")
+    logger.info(f"to insert: {to_insert}")
+    logger.info(f"to delete: {to_del}")
+    logger.info(f"unchanged: {unchanged}")
+
+    # delete embeddings
+    cur.execute("DELETE FROM embeddings WHERE id NOT IN ?", res_format)
+    con.commit()
+
+    # insert embeddings
     for i in range(0, len(col), 100):
         if i + 99 > len(col):
             j = len(col)
@@ -292,7 +311,6 @@ def sync_embeddings(con, cur):
     
         embeddings = asyncio.run(get_embeddings(col[i:j+1]))
         embeddings_table(con, cur, embeddings)
-    # cur.execute("SELECT COUNT(*) FROM embeddings;")
     logger.info("embeddings table updated.")
 
 ######################################################################
