@@ -1,4 +1,5 @@
 import sqlite3
+from sync_db import sql_to_json
 
 con = sqlite3.connect(".db")
 cur = con.cursor()
@@ -25,5 +26,11 @@ def select():
 
 if __name__ == "__main__":
     # select_count()
-    # print(select())
-    del_rows()
+    results = select()
+    records = sql_to_json(con, cur, results)
+    pub_dates = []
+    for r in records:
+        pub_dates.append(r.get("publicationDate"))
+    filtered = [year for year in pub_dates if len(year) > 4]
+    print(len(pub_dates))
+    print(pub_dates)

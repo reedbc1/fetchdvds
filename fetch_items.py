@@ -15,7 +15,7 @@ class Config:
     pageSize: int
     pageLimit: int | None # Must be greater than 0
 
-CONFIG = Config(searchText="potato", pageSize=10, pageLimit=None)
+CONFIG = Config(searchText="potato", pageSize=100, pageLimit=None)
 
 async def fetch_bibs(sem: asyncio.Semaphore, pageNum: int = 0, get_pages: bool = False):
     async with sem:
@@ -168,7 +168,8 @@ async def fetch_all_editions(edition_ids: list):
 if __name__ == "__main__":
     # all_bibs, all_ids = fetch_all_bibs()
     # edition = fetch_edition("5dea2497-dff9-11ed-8960-5526fbe53189")
-    # print(len(all_ids))
+    
     all_bibs, all_ids = asyncio.run(fetch_all_bibs())
-    result = asyncio.run(fetch_all_editions({"5dea2497-dff9-11ed-8960-5526fbe53189"}))
+    print(len(all_ids))
+    # result = asyncio.run(fetch_all_editions({"5dea2497-dff9-11ed-8960-5526fbe53189"}))
     
