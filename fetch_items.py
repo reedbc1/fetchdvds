@@ -4,6 +4,7 @@ import asyncio
 import httpx
 from dataclasses import dataclass
 from tqdm.asyncio import tqdm
+from datetime import date
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -140,7 +141,8 @@ async def fetch_edition(id: str, sem: asyncio.Semaphore):
 
 async def fetch_all_bibs():
     sem = asyncio.Semaphore(5)
-    years = list(range(2000,2026))
+    current_year = date.today().year
+    years = list(range(2000, current_year + 1))
 
     all_bibs = []
     all_ids = set()
