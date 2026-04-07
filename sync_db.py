@@ -98,7 +98,8 @@ def bibs(con, cur):
     logger.info(f"unchanged: {len(unchanged)}")
 
     # insert records
-    records_to_insert = [record for record in api_data if record[0] in to_insert]
+    records_to_insert = {record for record in api_data if record[0] in to_insert}
+    logger.info(f"records_to_insert: {len(records_to_insert)}")
     cur.executemany("INSERT INTO bibs VALUES(?, ?, ?, ?, ?)", records_to_insert)
     con.commit()  # Remember to commit the transaction after executing INSERT.
 
@@ -376,8 +377,7 @@ def sql_to_json(con, cur, results):
 
 if __name__ == "__main__":
     con, cur = create_con()
-    # sync(con, cur)
-    # sync_embeddings(con, cur)
+    sync(con, cur)
 
-    top_20 = sim_search(con, cur, "test")
-    print(top_20)
+    # top_20 = sim_search(con, cur, "test")
+    # print(top_20)

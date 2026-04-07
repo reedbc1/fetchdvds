@@ -93,6 +93,4 @@ if __name__ == "__main__":
     # add_primary_key_editions()
     # res = cur.execute("SELECT * FROM editions limit 10;").fetchall()
     # print(res)
-    table_names = ["editions", "bibs", "embeddings"]
-    for name in table_names:
-        table_info(name)
+    select_count()
