@@ -98,6 +98,7 @@ def bibs(con, cur):
     logger.info(f"unchanged: {len(unchanged)}")
 
     # insert records
+    records_to_insert = {record for record in api_data if record[0] in to_insert}
     cur.executemany("INSERT INTO bibs VALUES(?, ?, ?, ?, ?)", records_to_insert)
     con.commit()  # Remember to commit the transaction after executing INSERT.
 
