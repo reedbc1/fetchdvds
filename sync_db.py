@@ -357,6 +357,7 @@ def sim_search(con, cur, user_query: str):
     """
 
     res = cur.execute(query).fetchall()
+    res_json = sql_to_json(con, cur, res)
 
     # output results
     return res
@@ -375,9 +376,8 @@ def sql_to_json(con, cur, results):
 
 if __name__ == "__main__":
     con, cur = create_con()
-    sync(con, cur)
+    # sync(con, cur)
     # sync_embeddings(con, cur)
 
-    # top_20 = sim_search(con, cur, "test")
-    # records = sql_to_json(con, cur, top_20)
-    # print(records)
+    top_20 = sim_search(con, cur, "test")
+    print(top_20)
