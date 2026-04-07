@@ -47,11 +47,52 @@ def remove_dup_em():
     con.commit()
 
 def add_primary_keys():
-    cur.execute("CREATE TABLE embeddings2(id, embedding BLOB);")
+    cur.execute("DROP TABLE IF EXISTS embeddings2")
+    cur.execute("CREATE TABLE embeddings2(id PRIMARY KEY, embedding BLOB);")
     cur.execute("INSERT INTO embeddings2 SELECT id, embedding FROM embeddings;")
     con.commit()
     return cur.execute("SELECT * FROM embeddings2").fetchall()
 
+def rename_tables():
+    cur.execute("DROP TABLE IF EXISTS embeddings_legacy")
+    cur.execute("ALTER TABLE embeddings RENAME TO embeddings_legacy;")
+    cur.execute("ALTER TABLE embeddings2 RENAME TO embeddings;")
+    con.commit()
+
+def add_primary_key_bibs():
+    query = """
+    DROP TABLE IF EXISTS bibs2;
+    CREATE TABLE bibs2(id PRIMARY KEY, title, publicationDate, coverUrl, editionId);
+    INSERT INTO bibs2 SELECT * from bibs;
+
+    DROP TABLE IF EXISTS bibs_legacy;
+    ALTER TABLE bibs RENAME TO bibs_legacy;
+    ALTER TABLE bibs2 RENAME TO bibs;
+    """
+    cur.executescript(query)
+    con.commit()
+
+def add_primary_key_editions():
+    query = """
+    DROP TABLE IF EXISTS editions2;
+    CREATE TABLE editions2(id PRIMARY KEY, author, itemLanguage, subjects, summary);
+    INSERT INTO editions2 SELECT * from editions;
+
+    DROP TABLE IF EXISTS editions_legacy;
+    ALTER TABLE editions RENAME TO editions_legacy;
+    ALTER TABLE editions2 RENAME TO editions;
+    """
+    cur.executescript(query)
+    con.commit()
+
+def table_info(table_name):
+    res = cur.execute(f"PRAGMA table_info({table_name})").fetchall()
+    print(res)
+
 if __name__ == "__main__":
-    ...
-    
+    # add_primary_key_editions()
+    # res = cur.execute("SELECT * FROM editions limit 10;").fetchall()
+    # print(res)
+    table_names = ["editions", "bibs", "embeddings"]
+    for name in table_names:
+        table_info(name)

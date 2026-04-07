@@ -78,7 +78,7 @@ def ensure_embeddings_table(con, cur):
 
 def bibs(con, cur):
     # create table if it doesn't exist
-    cur.execute("CREATE TABLE IF NOT EXISTS bibs(id, title, publicationDate, coverUrl, editionId)")
+    cur.execute("CREATE TABLE IF NOT EXISTS bibs(id PRIMARY KEY, title, publicationDate, coverUrl, editionId)")
 
     # fetch bibs with API
     api_data, api_ids = asyncio.run(fetch_items.fetch_all_bibs())
@@ -116,7 +116,7 @@ def bibs(con, cur):
 
 def editions(con, cur):
     # create table if it doesn't exist
-    cur.execute("CREATE TABLE IF NOT EXISTS editions(id, author, itemLanguage, subjects, summary)")
+    cur.execute("CREATE TABLE IF NOT EXISTS editions(id PRIMARY KEY, author, itemLanguage, subjects, summary)")
 
     # use bib table to generate diff with editions table
     res = cur.execute("SELECT editionId FROM bibs").fetchall()
@@ -184,7 +184,7 @@ def join_tables(con, cur):
     logger.info("creating records table...")
     # drop pre-existing table
     cur.execute("DROP TABLE IF EXISTS records")
-    cur.execute("CREATE TABLE records(id, title, author, publicationDate, itemLanguage, subjects, summary, coverUrl)")
+    cur.execute("CREATE TABLE records(id PRIMARY KEY, title, author, publicationDate, itemLanguage, subjects, summary, coverUrl)")
     
     # join bibs and editions on editionId = id
     query: str = """
