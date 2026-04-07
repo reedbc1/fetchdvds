@@ -46,12 +46,12 @@ def remove_dup_em():
     cur.execute(f"DELETE FROM embeddings WHERE id IN {tup_to_remove};")
     con.commit()
 
+def add_primary_keys():
+    cur.execute("CREATE TABLE embeddings2(id, embedding BLOB);")
+    cur.execute("INSERT INTO embeddings2 SELECT id, embedding FROM embeddings;")
+    con.commit()
+    return cur.execute("SELECT * FROM embeddings2").fetchall()
+
 if __name__ == "__main__":
-    # print(select())
-    # print(select())
-    # del_rows()
-    # distinct_tables("records")
-   
-    # remove_dup_em()
-    select_count()
+    ...
     
