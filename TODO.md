@@ -19,3 +19,7 @@
 ## Query speed
 - try to improve query speed, or consider using vector database instead
 
+## Hosting
+- add WSGI server
+- add cloudfare subdomain
+
