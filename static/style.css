@@ -66,11 +66,14 @@ input[type="submit"]:hover {
 .results-page {
     min-height: 100%;
     padding: 0;
+    --results-header-height: 5.5rem;
 }
 
-.site-header {
-    position: sticky;
+.results-page .site-header {
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     z-index: 10;
     display: flex;
     align-items: center;
@@ -103,10 +106,10 @@ input[type="submit"]:hover {
     font-size: 1rem;
 }
 
-.results-container {
+.results-page .results-container {
     width: min(100%, 64rem);
     margin: 0 auto;
-    padding: 2.5rem 2rem;
+    padding: calc(2.5rem + var(--results-header-height)) 2rem 2.5rem;
 }
 
 .results-container h1 {
@@ -192,9 +195,10 @@ input[type="submit"]:hover {
 
     .results-page {
         padding: 0;
+        --results-header-height: 8.5rem;
     }
 
-    .site-header {
+    .results-page .site-header {
         flex-direction: column;
         align-items: stretch;
         padding: 1rem;
@@ -204,8 +208,8 @@ input[type="submit"]:hover {
         max-width: none;
     }
 
-    .results-container {
-        padding: 1.5rem 1rem;
+    .results-page .results-container {
+        padding: calc(1.5rem + var(--results-header-height)) 1rem 1.5rem;
     }
 
     .result-card {
