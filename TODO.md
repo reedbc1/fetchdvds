@@ -7,10 +7,6 @@
 ## Item Location
 - Display item location on search page
 
-## Page Interaction
-- Pin the header to the top so it stays there when scrolling
-- make clicking on link open in new tab
-
 ## Auto-Sync
 - write logs to file to view cron jobs
 
