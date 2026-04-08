@@ -7,9 +7,6 @@
 ## Item Location
 - Display item location on search page
 
-## Page Size
-- Increase page size to 100
-
 ## Page Interaction
 - Pin the header to the top so it stays there when scrolling
 - make clicking on link open in new tab

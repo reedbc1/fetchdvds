@@ -342,7 +342,7 @@ def sim_search(con, cur, user_query: str):
     query = """
     CREATE TEMP TABLE IF NOT EXISTS nearest_neighbors AS
     SELECT e.id, v.distance FROM embeddings AS e
-    JOIN vector_quantize_scan('embeddings', 'embedding', vector_as_f32(?), 20) AS v
+    JOIN vector_quantize_scan('embeddings', 'embedding', vector_as_f32(?), 100) AS v
     ON e.rowid = v.rowid;
     """
 
