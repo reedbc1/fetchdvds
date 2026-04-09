@@ -90,7 +90,7 @@ async def fetch_bibs(sem: asyncio.Semaphore, dateFrom: int, dateTo: int, pageNum
         ids.add(r.get("id"))
     return parsed, ids
 
-def get_language():
+def get_lang(lang_abr):
     langs = {
         'ben': 'Bengali',
         'bos': 'Bosnian',
@@ -106,6 +106,14 @@ def get_language():
         'und': 'Undefined',
         '|||': 'Undefined'
     }
+
+    lang_abr_std = lang_abr.lower().strip()
+    full_lang = langs.get(lang_abr_std)
+
+    if full_lang:
+        return full_lang
+    else:
+        return "Undefined"
 
 async def fetch_edition(id: str, sem: asyncio.Semaphore):
     async with sem:
