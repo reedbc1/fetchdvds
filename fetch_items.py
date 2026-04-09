@@ -90,6 +90,23 @@ async def fetch_bibs(sem: asyncio.Semaphore, dateFrom: int, dateTo: int, pageNum
         ids.add(r.get("id"))
     return parsed, ids
 
+def get_language():
+    langs = {
+        'ben': 'Bengali',
+        'bos': 'Bosnian',
+        'eka': 'Ekajuk',
+        'eng': 'English',
+        'enm': 'Middle English',
+        'hrv': 'Croatian',
+        'kor': 'Korean',
+        'mul': 'Multiple languages',
+        'spa': 'Spanish',
+        'srp': 'Serbian',
+        'tur': 'Turkish',
+        'und': 'Undefined',
+        '|||': 'Undefined'
+    }
+
 async def fetch_edition(id: str, sem: asyncio.Semaphore):
     async with sem:
         url: str = f"https://na2.iiivega.com/api/search-result/editions/{id}"
