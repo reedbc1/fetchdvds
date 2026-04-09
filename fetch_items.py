@@ -18,7 +18,7 @@ class Config:
 
 CONFIG = Config(searchText="*", pageSize=100, pageLimit=None)
 
-async def fetch_bibs(sem: asyncio.Semaphore, dateFrom: int, dateTo: int, pageNum: int = 0, get_pages: bool = False):
+async def fetch_bibs(sem: asyncio.Semaphore, dateFrom: int, dateTo: int, pageNum: int = 0, get_pages: bool = False) -> tuple:
     async with sem:
         # if not get_pages:
         #     logger.info(f"Fetching page {pageNum}")
@@ -90,7 +90,7 @@ async def fetch_bibs(sem: asyncio.Semaphore, dateFrom: int, dateTo: int, pageNum
         ids.add(r.get("id"))
     return parsed, ids
 
-def get_lang(lang_abr):
+def get_lang(lang_abr: str) -> str:
     langs = {
         'ben': 'Bengali',
         'bos': 'Bosnian',
@@ -115,7 +115,7 @@ def get_lang(lang_abr):
     else:
         return "Undefined"
 
-async def fetch_edition(id: str, sem: asyncio.Semaphore):
+async def fetch_edition(id: str, sem: asyncio.Semaphore) -> tuple:
     async with sem:
         url: str = f"https://na2.iiivega.com/api/search-result/editions/{id}"
         headers: dict = {
@@ -164,7 +164,7 @@ async def fetch_edition(id: str, sem: asyncio.Semaphore):
 
         return edition_info
 
-async def fetch_all_bibs():
+async def fetch_all_bibs() -> tuple:
     sem = asyncio.Semaphore(5)
     current_year = date.today().year
     years = list(range(2000, current_year + 1))
@@ -179,7 +179,7 @@ async def fetch_all_bibs():
     
     return all_bibs, all_ids
 
-async def bibs_loop(sem: asyncio.Semaphore, dateFrom: int, dateTo: int, all_bibs: list, all_ids: set):
+async def bibs_loop(sem: asyncio.Semaphore, dateFrom: int, dateTo: int, all_bibs: list, all_ids: set) -> tuple:
     total_pages: int = await fetch_bibs(sem = sem, dateFrom=dateFrom, dateTo=dateTo, get_pages=True)
 
     coroutines: list = [fetch_bibs(sem=sem, dateFrom=dateFrom, dateTo=dateTo,  pageNum=i) for i in range(0, total_pages + 1)]
