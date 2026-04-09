@@ -93,4 +93,10 @@ if __name__ == "__main__":
     # add_primary_key_editions()
     # res = cur.execute("SELECT * FROM editions limit 10;").fetchall()
     # print(res)
-    select_count()
+    # select_count()
+    # res = cur.execute("pragma table_info(editions)").fetchall()
+    # print(res)
+
+    res = cur.execute("select itemLanguage, count(itemLanguage) from editions group by itemLanguage;")
+    fetched_res = res.fetchall()
+    print(fetched_res)
