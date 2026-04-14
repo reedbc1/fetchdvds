@@ -91,6 +91,7 @@ async def fetch_bibs(sem: asyncio.Semaphore, dateFrom: int, dateTo: int, pageNum
     return parsed, ids
 
 def get_lang(lang_abr: str) -> str:
+    # take lang code and return full language.
     langs = {
         'ben': 'Bengali',
         'bos': 'Bosnian',
