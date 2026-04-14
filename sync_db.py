@@ -12,11 +12,14 @@ from openai import OpenAI, AsyncOpenAI
 from dotenv import load_dotenv
 import tqdm.asyncio
 import tqdm
+from datetime import datetime
 
 load_dotenv()
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(encoding="utf-8", level=logging.INFO)
+fh = logging.FileHandler('history.log')
+logger.addHandler(fh)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
 ######################################################################
@@ -103,7 +106,13 @@ def bibs(con, cur):
     con.commit()  # Remember to commit the transaction after executing INSERT.
 
     # delete records
-    placeholders = ','.join(['?' for _ in to_delete])
+    if len(to_delete) == 0:
+        return
+    elif len(to_delete) == 1:
+        placeholders = "?,"
+    else:
+        placeholders = ','.join(['?' for _ in to_delete])
+
     query = f"DELETE FROM bibs WHERE id IN ({placeholders})"
     ids_to_delete = [id for id in to_delete]
 
@@ -163,7 +172,8 @@ def editions(con, cur):
 # Sync
 ######################################################################
 
-def sync(con, cur):
+def sync(con, cur, logger):
+    logger.info(f"current time: {datetime.now()}")
     logger.info("starting sync...")
     logger.info("################################")
     bibs(con, cur)
@@ -376,4 +386,4 @@ def sql_to_json(con, cur, results):
 
 if __name__ == "__main__":
     con, cur = create_con()
-    sync(con, cur)
+    sync(con, cur, logger)
